@@ -1,43 +1,20 @@
-#include "GLFW/glfw3.h"
-#include "glad/glad.h"
 #include "types.h"
-#include <cstdio>
+#include "window.cpp"
 
 int main()
 {
-    constexpr i32 SCREEN_HEIGHT = 720;
-    constexpr i32 SCREEN_WIDTH = 1280;
-    constexpr char title[] = "hello there";
+    constexpr u32 SCREEN_HEIGHT = 720;
+    constexpr u32 SCREEN_WIDTH  = 1280;
+    std::string title           = "hello there";
 
-    GLFWwindow* window;
-    if(!glfwInit())
-    {
-        printf("[LOG_ERROR]: failed to initialize glfw");
-        return -1;
-    }
+    Window main_window(SCREEN_WIDTH, SCREEN_HEIGHT, title);
 
-    window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, title, nullptr, nullptr);
-
-    if(!window) {
-        printf("failed to init window");
-        glfwTerminate();
-        return -1;
-    }
-
-    glfwMakeContextCurrent(window);
-
-    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        printf("failed to init glad");
-        return -1;
-    }
-
-    while(!glfwWindowShouldClose(window))
+    GLFWwindow *window = main_window.GetNativeWindow();
+    while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
         glfwSwapBuffers(window);
     }
 
-    glfwTerminate();
     return 0;
 }

@@ -2,3 +2,4 @@
 -I./vendor/glad/include
 -I./src
 -DGLFW_INCLUDE_NONE
+-xc++
