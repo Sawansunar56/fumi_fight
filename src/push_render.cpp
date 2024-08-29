@@ -1,18 +1,15 @@
-#include "core_pch.h"
 #include "types.h"
-#include "const_stuff.h"
 #include "push_render.h"
 #include <glad/glad.h>
 
-u32 ren::vert_arr_id                  = 0;
-u32 ren::vert_buf_id                  = 0;
-s32 ren::num_vertices                 = 0;
-s32 ren::current_vertex_per_primitive = 3;
-Vertex *ren::vertex_list              = nullptr;
-
-void ren::Init(Arena *arena)
+void ren::Init_Im(Arena *arena, i32 max_vertex_count)
 {
-    vertex_list = PushArray(arena, GLOB_STATE::MAX_VERTICES_PER_DRAW, Vertex);
+    this->vertex_list = PushArray(arena, max_vertex_count, Vertex);
+    this->vert_arr_id = 0;
+    this->vert_buf_id = 0;
+    this->num_vertices = 0;
+    this->current_vertex_per_primitive = 3;
+    this->max_vertex_count = max_vertex_count;
 
     glGenVertexArrays(1, &vert_arr_id);
     glBindVertexArray(vert_arr_id);
@@ -20,14 +17,26 @@ void ren::Init(Arena *arena)
     glCreateBuffers(1, &vert_buf_id);
     glBindBuffer(GL_ARRAY_BUFFER, vert_buf_id);
 
-    glVertexAttribPointer(0, sizeof(Vertex::Position) / sizeof(f32), GL_FLOAT,
-                          GL_FALSE, sizeof(Vertex),
-                          (void *)(offsetof(Vertex, Position)));
+    glVertexAttribPointer(0,
+                          sizeof(Vertex::position) / sizeof(f32),
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(Vertex),
+                          (void *)(offsetof(Vertex, position)));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, sizeof(Vertex::color) / sizeof(f32), GL_FLOAT,
-                          GL_FALSE, sizeof(Vertex),
+    glVertexAttribPointer(1,
+                          sizeof(Vertex::color) / sizeof(f32),
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(Vertex),
                           (void *)(offsetof(Vertex, color)));
     glEnableVertexAttribArray(1);
+
+    glClearColor(0.098, 0.098, 0.090, 1.0f);
+}
+
+void ren::begin_Im() {
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 }
 
 void ren::flush()
@@ -54,9 +63,9 @@ void ren::flush()
     num_vertices = 0;
 }
 
-void ren::quad(f32 x0, f32 y0, f32 x1, f32 y1, Color color)
+void ren::quad_Im(f32 x0, f32 y0, f32 x1, f32 y1, Color color)
 {
-    if (num_vertices > (GLOB_STATE::MAX_VERTICES_PER_DRAW - 6))
+    if (num_vertices > (max_vertex_count - 6))
     {
         flush();
     }
@@ -74,15 +83,13 @@ void ren::quad(f32 x0, f32 y0, f32 x1, f32 y1, Color color)
     num_vertices += 6;
 }
 
-void ren::put_vertex(Vertex *vert, V2 position, Color color)
+void ren::put_vertex(Vertex *vert, v2 position, Color color)
 {
-    vert->Position = {position.x, position.y, 0};
+    vert->position = {position.x, position.y, 0};
     vert->color    = color;
 }
 
-// NOTE: Don't really need it right now but maybe in the future when I have to 
-// have multiple vertex buffer.
-void ren::end()
+void ren::end_Im()
 {
     ren::flush();
     // glDeleteVertexArrays(1, &vert_arr_id);

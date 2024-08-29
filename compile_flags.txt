@@ -1,5 +1,6 @@
 -I./vendor/glfw/include
 -I./vendor/glad/include
 -I./src
+-DNDEBUG
 -DGLFW_INCLUDE_NONE
 -xc++

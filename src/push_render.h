@@ -1,22 +1,46 @@
 #pragma once
-#include "base_types.h"
 #include "arena.h"
+#include "ren_types.h"
+#include "my_maths.h"
 
 class ren
 {
   public:
-    static void flush();
-    static void quad(f32, f32, f32, f32, Color);
-    static void put_vertex(Vertex *, V2 position, Color color);
-    static void end();
+    ren(const ren &) = delete;
+    static ren &Get()
+    {
+        static ren s_Instance;
+        return s_Instance;
+    }
 
-    /* Initializes vertex array into the arena */
-    static void Init(Arena *);
+    static void quad(f32 x0, f32 y0, f32 x1, f32 y1, Color color)
+    {
+        return Get().quad_Im(x0, y0, x1, y1, color);
+    }
+
+    static void Init(Arena *arena, i32 max_vertex_count)
+    {
+        return Get().Init_Im(arena, max_vertex_count);
+    }
+
+    static void end() { return Get().end_Im(); }
+    static void begin() { return Get().begin_Im(); }
 
   private:
-    static Vertex *vertex_list;
-    static u32 vert_arr_id;
-    static u32 vert_buf_id;
-    static s32 num_vertices;
-    static s32 current_vertex_per_primitive;
+    void Init_Im(Arena *, i32 max_vertex_count);
+    void end_Im();
+    void begin_Im();
+    void quad_Im(f32, f32, f32, f32, Color);
+    void flush();
+    void put_vertex(Vertex *, v2 position, Color color);
+
+  private:
+    ren() {}
+    static ren s_Instance;
+    Vertex *vertex_list;
+    u32 vert_arr_id;
+    u32 vert_buf_id;
+    s32 num_vertices;
+    s32 current_vertex_per_primitive;
+    s32 max_vertex_count;
 };
