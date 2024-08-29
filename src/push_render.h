@@ -13,9 +13,9 @@ class ren
         return s_Instance;
     }
 
-    static void quad(f32 x0, f32 y0, f32 x1, f32 y1, Color color)
+    static void quad(f32 x0, f32 y0, f32 x1, f32 y1, color Color)
     {
-        return Get().quad_Im(x0, y0, x1, y1, color);
+        return Get().quad_Im(x0, y0, x1, y1, Color);
     }
 
     static void Init(Arena *arena, i32 max_vertex_count)
@@ -30,9 +30,9 @@ class ren
     void Init_Im(Arena *, i32 max_vertex_count);
     void end_Im();
     void begin_Im();
-    void quad_Im(f32, f32, f32, f32, Color);
+    void quad_Im(f32, f32, f32, f32, color);
     void flush();
-    void put_vertex(Vertex *, v2 position, Color color);
+    void put_vertex(Vertex *, v2 position, color Color);
 
   private:
     ren() {}

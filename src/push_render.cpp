@@ -32,7 +32,8 @@ void ren::Init_Im(Arena *arena, i32 max_vertex_count)
                           (void *)(offsetof(Vertex, color)));
     glEnableVertexAttribArray(1);
 
-    glClearColor(0.098, 0.098, 0.090, 1.0f);
+    color Color = normalize_hsl({350, 39, 54, 100});
+    glClearColor(Color.r, Color.g, Color.b, Color.a);
 }
 
 void ren::begin_Im() {
@@ -63,7 +64,7 @@ void ren::flush()
     num_vertices = 0;
 }
 
-void ren::quad_Im(f32 x0, f32 y0, f32 x1, f32 y1, Color color)
+void ren::quad_Im(f32 x0, f32 y0, f32 x1, f32 y1, color Color)
 {
     if (num_vertices > (max_vertex_count - 6))
     {
@@ -72,21 +73,21 @@ void ren::quad_Im(f32 x0, f32 y0, f32 x1, f32 y1, Color color)
 
     Vertex *v = vertex_list + num_vertices;
 
-    put_vertex(&v[0], {x1, y0}, color);
-    put_vertex(&v[1], {x0, y0}, color);
-    put_vertex(&v[2], {x1, y1}, color);
+    put_vertex(&v[0], {x1, y0}, Color);
+    put_vertex(&v[1], {x0, y0}, Color);
+    put_vertex(&v[2], {x1, y1}, Color);
 
-    put_vertex(&v[3], {x1, y1}, color);
-    put_vertex(&v[4], {x0, y0}, color);
-    put_vertex(&v[5], {x0, y1}, color);
+    put_vertex(&v[3], {x1, y1}, Color);
+    put_vertex(&v[4], {x0, y0}, Color);
+    put_vertex(&v[5], {x0, y1}, Color);
 
     num_vertices += 6;
 }
 
-void ren::put_vertex(Vertex *vert, v2 position, Color color)
+void ren::put_vertex(Vertex *vert, v2 position, color Color)
 {
     vert->position = {position.x, position.y, 0};
-    vert->color    = color;
+    vert->color    = Color;
 }
 
 void ren::end_Im()

@@ -20,7 +20,7 @@ pushd .\build
 ctime -begin stupid_time.ctm
 if not exist glad.obj (
     echo "[LIBRARY_COMPILLING] Compilling Glad..."
-    cl /MD %glad_include% /c %glad_src%
+    cl /MD /Z7 %glad_include% /c %glad_src%
 )
 
 cl %comp_flags% %includes% /c %files% 

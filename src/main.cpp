@@ -9,7 +9,7 @@
 int main()
 {
     constexpr u32 totalMainMemory = Megabytes(2);
-    Arena *mainArena = ArenaAlloc(totalMainMemory);
+    Arena *mainArena              = ArenaAlloc(totalMainMemory);
 
     constexpr u32 SCREEN_WIDTH  = 1280;
     constexpr u32 SCREEN_HEIGHT = 720;
@@ -17,7 +17,8 @@ int main()
 
     Window main_window(SCREEN_WIDTH, SCREEN_HEIGHT, title);
 
-    Shader basic_shader("./shaders/basic_shader.vert", "./shaders/basic_shader.frag");
+    Shader basic_shader("./shaders/basic_shader.vert",
+                        "./shaders/basic_shader.frag");
 
     ren::Init(mainArena, 2000);
 
