@@ -1,15 +1,19 @@
 #include "types.h"
 #include "push_render.h"
 #include <glad/glad.h>
+#include "Shaders.h"
 
 void ren::Init_Im(Arena *arena, i32 max_vertex_count)
 {
-    this->vertex_list = PushArray(arena, max_vertex_count, Vertex);
-    this->vert_arr_id = 0;
-    this->vert_buf_id = 0;
+    this->vertex_list  = PushArray(arena, max_vertex_count, Vertex);
+    this->vert_arr_id  = 0;
+    this->vert_buf_id  = 0;
     this->num_vertices = 0;
     this->current_vertex_per_primitive = 3;
-    this->max_vertex_count = max_vertex_count;
+    this->max_vertex_count             = max_vertex_count;
+
+    this->shaderList.list = PushArray(arena, SHADER_MAX, Shader*);
+    this->shaderList.maximum = SHADER_MAX;
 
     glGenVertexArrays(1, &vert_arr_id);
     glBindVertexArray(vert_arr_id);
@@ -38,8 +42,11 @@ void ren::Init_Im(Arena *arena, i32 max_vertex_count)
     glClearColor(Color.r, Color.g, Color.b, Color.a);
 }
 
-void ren::begin_Im() {
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+void ren::begin_Im()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Shader *shader = shaderList.list[SHADER_BASIC];
+    shader->Bind();
 }
 
 void ren::flush()
@@ -97,4 +104,16 @@ void ren::end_Im()
     ren::flush();
     // glDeleteVertexArrays(1, &vert_arr_id);
     // glBindVertexArray(0);
+}
+
+void ren::add_shader_Im(Shader *current_shader, shader_types type)
+{
+    if (shaderList.count >= shaderList.maximum)
+    {
+        printf("maximum shader list limit reached\n");
+        return;
+    }
+
+    shaderList.list[type] = current_shader;
+    shaderList.count += 1;
 }

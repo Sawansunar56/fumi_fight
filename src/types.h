@@ -5,22 +5,22 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 typedef unsigned long long u64;
 
-typedef char i8;
-typedef short i16;
-typedef int i32;
+typedef char      i8;
+typedef short     i16;
+typedef int       i32;
 typedef long long i64;
 
-typedef i8 s8;
+typedef i8  s8;
 typedef i16 s16;
 typedef i32 s32;
 typedef i64 s64;
 
-typedef i8 b8;
+typedef i8  b8;
 typedef i16 b16;
 typedef i32 b32;
 typedef i64 b64;
 
-typedef float  f32;
+typedef float f32;
 typedef double f64;
 
 typedef u64 umm;
@@ -45,17 +45,17 @@ static_assert(sizeof(f64) == 8, "f64 is not 64 bit");
 
 #define ArrayCount(Array) (sizeof(Array) / sizeof((Array)[0]))
 
-constexpr s8  MIN_S8  = (s8)0x80;
+constexpr s8 MIN_S8   = (s8)0x80;
 constexpr s16 MIN_S16 = (s16)0x8000;
 constexpr s32 MIN_S32 = (s32)0x80000000;
 constexpr s64 MIN_S64 = (s64)0x8000000000000000llu;
 
-constexpr s8  MAX_S8  = (s8)0x7f;
+constexpr s8 MAX_S8   = (s8)0x7f;
 constexpr s16 MAX_S16 = (s16)0x7fff;
 constexpr s32 MAX_S32 = (s32)0x7fffffff;
 constexpr s64 MAX_S64 = (s64)0x7fffffffffffffffllu;
 
-constexpr u8  MAX_U8  = 0xff;
+constexpr u8 MAX_U8   = 0xff;
 constexpr u16 MAX_U16 = 0xffff;
 constexpr u32 MAX_U32 = 0xffffffff;
 constexpr u64 MAX_U64 = 0xffffffffffffffff;
@@ -88,4 +88,3 @@ constexpr u64 MAX_U64 = 0xffffffffffffffff;
 #else
 #define Assert(Expression)
 #endif
-

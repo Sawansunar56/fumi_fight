@@ -3,6 +3,25 @@
 #include "ren_types.h"
 #include "my_maths.h"
 
+class Shader;
+
+enum shader_types
+{
+    SHADER_BASIC,
+    SHADER_MAX
+};
+
+struct ren_shaders
+{
+    // Array of pointers
+    // You initialize shaders and then just reference the data inside of this.
+    // The array part is so that you can reference the values contiguously with 
+    // the shader_types enum. 
+    Shader **list; 
+    u32 count;
+    u32 maximum;
+};
+
 class ren
 {
   public:
@@ -25,6 +44,10 @@ class ren
 
     static void end() { return Get().end_Im(); }
     static void begin() { return Get().begin_Im(); }
+    static void add_shader(Shader *currentShader, shader_types types)
+    {
+        return Get().add_shader_Im(currentShader, types);
+    }
 
   private:
     void Init_Im(Arena *, i32 max_vertex_count);
@@ -33,6 +56,7 @@ class ren
     void quad_Im(f32, f32, f32, f32, color);
     void flush();
     void put_vertex(Vertex *, v2 position, color Color);
+    void add_shader_Im(Shader *currentShader, shader_types types);
 
   private:
     ren() {}
@@ -43,4 +67,6 @@ class ren
     s32 num_vertices;
     s32 current_vertex_per_primitive;
     s32 max_vertex_count;
+
+    ren_shaders shaderList;
 };
