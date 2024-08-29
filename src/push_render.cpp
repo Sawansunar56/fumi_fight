@@ -32,7 +32,9 @@ void ren::Init_Im(Arena *arena, i32 max_vertex_count)
                           (void *)(offsetof(Vertex, color)));
     glEnableVertexAttribArray(1);
 
-    color Color = normalize_hsl({350, 39, 54, 100});
+    color inter = hsl_to_rgb({182, 90, 45, 100});
+    color Color = normalize_color(inter);
+
     glClearColor(Color.r, Color.g, Color.b, Color.a);
 }
 

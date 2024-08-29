@@ -86,3 +86,11 @@ inline v4 normalize_hsl(hsl_color color)
     return Result;
 }
 
+inline color hsl_to_rgb(hsl_color Color)
+{
+    color Result = normalize_hsl(Color);
+
+    Result *= 255.0f;
+
+    return Result;
+}
