@@ -16,26 +16,21 @@ int main()
     constexpr u32 SCREEN_WIDTH  = 1280;
     constexpr u32 SCREEN_HEIGHT = 720;
     std::string title           = "Hello there";
-
     Window main_window(SCREEN_WIDTH, SCREEN_HEIGHT, title);
 
-    // Shader Init
-    Shader *basic_shader = new Shader("./shaders/basic_shader.vert",
-                                      "./shaders/basic_shader.frag");
-
     // opengl renderer init
-    ren::Init(mainArena, 2000);
-    ren::add_shader(basic_shader, SHADER_BASIC);
+    ren::Init(mainArena);
 
     while (main_window.ShouldClose())
     {
         main_window.Update();
 
+        // CLEAN: This shouldn't be in here. Put this somewhere else.
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         ren::begin();
-        ren::quad(500, 100, 200, 200, {0.9f, 0.8f, 0.4f, 0.1f});
+        ren::quad({100, 100}, {200, 200}, {0.23f, 0.54f, 0.233f, 1.0f});
         ren::end();
     }
     ArenaRelease(mainArena);
-    delete basic_shader;
     return 0;
 }

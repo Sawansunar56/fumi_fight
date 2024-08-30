@@ -15,9 +15,9 @@ struct ren_shaders
 {
     // Array of pointers
     // You initialize shaders and then just reference the data inside of this.
-    // The array part is so that you can reference the values contiguously with 
-    // the shader_types enum. 
-    Shader **list; 
+    // The array part is so that you can reference the values contiguously with
+    // the shader_types enum.
+    Shader **list;
     u32 count;
     u32 maximum;
 };
@@ -37,10 +37,12 @@ class ren
         return Get().quad_Im(x0, y0, x1, y1, Color);
     }
 
-    static void Init(Arena *arena, i32 max_vertex_count)
+    static void quad(v3 min, v3 max, color Color)
     {
-        return Get().Init_Im(arena, max_vertex_count);
+        return Get().quad_Im(min.x, min.y, min.x + max.x, min.y + max.y, Color);
     }
+
+    static void Init(Arena *arena) { return Get().Init_Im(arena); }
 
     static void end() { return Get().end_Im(); }
     static void begin() { return Get().begin_Im(); }
@@ -50,10 +52,14 @@ class ren
     }
 
   private:
-    void Init_Im(Arena *, i32 max_vertex_count);
+    void Init_Im(Arena *);
     void end_Im();
     void begin_Im();
-    void quad_Im(f32, f32, f32, f32, color); // NOTE: This is about points not width and height
+    void quad_Im(f32,
+                 f32,
+                 f32,
+                 f32,
+                 color); // NOTE: This is about points not width and height
     void flush();
     void put_vertex(Vertex *, v2 position, color Color);
     void add_shader_Im(Shader *currentShader, shader_types types);

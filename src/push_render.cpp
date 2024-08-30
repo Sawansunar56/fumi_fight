@@ -4,17 +4,21 @@
 #include "Shaders.h"
 #include "my_maths.h"
 
-void ren::Init_Im(Arena *arena, i32 max_vertex_count)
-{
-    this->vertex_list  = PushArray(arena, max_vertex_count, Vertex);
-    this->vert_arr_id  = 0;
-    this->vert_buf_id  = 0;
-    this->num_vertices = 0;
-    this->current_vertex_per_primitive = 3;
-    this->max_vertex_count             = max_vertex_count;
+#define MAX_VERT_COUNT 5000
 
-    this->shaderList.list = PushArray(arena, SHADER_MAX, Shader*);
+void ren::Init_Im(Arena *arena)
+{
+    this->vert_arr_id                  = 0;
+    this->vert_buf_id                  = 0;
+    this->num_vertices                 = 0;
+    this->current_vertex_per_primitive = 3;
+    this->max_vertex_count             = MAX_VERT_COUNT;
+    this->vertex_list        = PushArray(arena, this->max_vertex_count, Vertex);
+    this->shaderList.list    = PushArray(arena, SHADER_MAX, Shader *);
     this->shaderList.maximum = SHADER_MAX;
+
+    this->shaderList.list[SHADER_BASIC] =  new Shader("./shaders/basic_shader.vert",
+                                      "./shaders/basic_shader.frag");
 
     glGenVertexArrays(1, &vert_arr_id);
     glBindVertexArray(vert_arr_id);
@@ -37,7 +41,7 @@ void ren::Init_Im(Arena *arena, i32 max_vertex_count)
                           (void *)(offsetof(Vertex, color)));
     glEnableVertexAttribArray(1);
 
-    color inter = hsl_to_rgb({182, 90, 45, 100});
+    color inter = hsl_to_rgb({182, 5, 8, 100});
     color Color = normalize_color(inter);
 
     glClearColor(Color.r, Color.g, Color.b, Color.a);
@@ -45,11 +49,11 @@ void ren::Init_Im(Arena *arena, i32 max_vertex_count)
 
 void ren::begin_Im()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     Shader *shader = shaderList.list[SHADER_BASIC];
     shader->Bind();
-    
-    mat4x4 projection = create_orthographic_mat(0.0f, 1280, 720, 0.0f, 1.0f, -1.0f);
+
+    mat4x4 projection =
+        create_orthographic_mat(0.0f, 1280, 720, 0.0f, 1.0f, -1.0f);
     shader->SetUniformMat4("u_Projection", projection);
 }
 
@@ -106,8 +110,7 @@ void ren::put_vertex(Vertex *vert, v2 position, color Color)
 void ren::end_Im()
 {
     ren::flush();
-    // glDeleteVertexArrays(1, &vert_arr_id);
-    // glBindVertexArray(0);
+    shaderList.list[SHADER_BASIC]->Unbind();
 }
 
 void ren::add_shader_Im(Shader *current_shader, shader_types type)
