@@ -53,7 +53,7 @@ class ren
     void Init_Im(Arena *, i32 max_vertex_count);
     void end_Im();
     void begin_Im();
-    void quad_Im(f32, f32, f32, f32, color);
+    void quad_Im(f32, f32, f32, f32, color); // NOTE: This is about points not width and height
     void flush();
     void put_vertex(Vertex *, v2 position, color Color);
     void add_shader_Im(Shader *currentShader, shader_types types);

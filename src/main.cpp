@@ -32,10 +32,9 @@ int main()
         main_window.Update();
 
         ren::begin();
-        ren::quad(-0.5f, 0.5f, 0.5f, -0.5f, {0.9f, 0.8f, 0.4f, 0.1f});
+        ren::quad(500, 100, 200, 200, {0.9f, 0.8f, 0.4f, 0.1f});
         ren::end();
     }
-
     ArenaRelease(mainArena);
     delete basic_shader;
     return 0;

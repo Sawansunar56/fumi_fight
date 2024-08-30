@@ -129,4 +129,16 @@ union v4i {
     i32 E[4];
 };
 
+union mat4x4 {
+    f32 E[4][4];
+
+    f32* operator[](i32 index) {
+        return E[index];
+    }
+
+    const f32* operator[](i32 index) const {
+        return E[index];
+    }
+};
+
 #include "my_maths.inl"

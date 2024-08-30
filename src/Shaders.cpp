@@ -90,3 +90,8 @@ void Shader::SetUniformFloat3(const char *name, f32 x, f32 y, f32 z) const
 {
     glUniform3f(glGetUniformLocation(m_Id, "textColor"), x, y, z);
 }
+
+void Shader::SetUniformMat4(const std::string &name, const mat4x4 &matrix) {
+    GLint location = glGetUniformLocation(m_Id, name.c_str());
+    glUniformMatrix4fv(location, 1, GL_FALSE, &matrix[0][0]);
+}

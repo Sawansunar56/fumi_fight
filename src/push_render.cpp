@@ -2,6 +2,7 @@
 #include "push_render.h"
 #include <glad/glad.h>
 #include "Shaders.h"
+#include "my_maths.h"
 
 void ren::Init_Im(Arena *arena, i32 max_vertex_count)
 {
@@ -47,6 +48,9 @@ void ren::begin_Im()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     Shader *shader = shaderList.list[SHADER_BASIC];
     shader->Bind();
+    
+    mat4x4 projection = create_orthographic_mat(0.0f, 1280, 720, 0.0f, 1.0f, -1.0f);
+    shader->SetUniformMat4("u_Projection", projection);
 }
 
 void ren::flush()
