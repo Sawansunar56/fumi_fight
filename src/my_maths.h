@@ -141,4 +141,7 @@ union mat4x4 {
     }
 };
 
+typedef v4 color;
+typedef v4 hsl_color;
+
 #include "my_maths.inl"

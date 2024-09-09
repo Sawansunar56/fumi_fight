@@ -16,7 +16,8 @@ class Shader
     void SetUniformFloat3(const char *name, f32 x, f32 y, f32 z) const;
     void SetUniformMat4(const std::string &name, const mat4x4 &matrix);
 
-    u32 m_Id;
+  public:
+    b8 isInitialized;
 
   private:
     u32 compileShader(GLenum type, const std::string &source);
@@ -24,4 +25,5 @@ class Shader
     std::string loadShaderSource(const char *filePath);
 
   private:
+    u32 m_Id;
 };

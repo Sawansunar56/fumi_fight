@@ -4,7 +4,7 @@
 #include "Shaders.h"
 #include "my_maths.h"
 
-#define MAX_VERT_COUNT 5000
+constexpr u16 MAX_VERT_COUNT = 5000;
 
 void ren::Init_Im(Arena *arena)
 {
@@ -17,8 +17,29 @@ void ren::Init_Im(Arena *arena)
     this->shaderList.list    = PushArray(arena, SHADER_MAX, Shader *);
     this->shaderList.maximum = SHADER_MAX;
 
-    this->shaderList.list[SHADER_BASIC] =  new Shader("./shaders/basic_shader.vert",
-                                      "./shaders/basic_shader.frag");
+    // NOTE: Improve this shader handling after you have the full picture of the
+    // amount of things needed.
+    for (i32 i = 0; i < SHADER_MAX; ++i)
+    {
+        this->shaderList.list[i] = PushStruct(arena, Shader);
+    }
+
+    // CLEAN: This would get to tedious after sometime. COMPRESS IT.
+    if (!this->shaderList.list[SHADER_BASIC]->isInitialized)
+    {
+        this->shaderList.list[SHADER_BASIC]->Init(
+            "./shaders/basic_shader.vert",
+            "./shaders/basic_shader.frag");
+    }
+
+    if (!this->shaderList.list[SHADER_TEXTURE]->isInitialized)
+    {
+        this->shaderList.list[SHADER_TEXTURE]->Init(
+            "./shaders/texture_shader.vert",
+            "./shaders/texture_shader.frag");
+    }
+
+    m_Projection = create_orthographic_mat(0.0f, 1280, 720, 0.0f, 1.0f, -1.0f);
 
     glGenVertexArrays(1, &vert_arr_id);
     glBindVertexArray(vert_arr_id);
@@ -26,6 +47,7 @@ void ren::Init_Im(Arena *arena)
     glCreateBuffers(1, &vert_buf_id);
     glBindBuffer(GL_ARRAY_BUFFER, vert_buf_id);
 
+    // TODO: include uv as well but use index buffer to reserve on memory.
     glVertexAttribPointer(0,
                           sizeof(Vertex::position) / sizeof(f32),
                           GL_FLOAT,
@@ -41,20 +63,37 @@ void ren::Init_Im(Arena *arena)
                           (void *)(offsetof(Vertex, color)));
     glEnableVertexAttribArray(1);
 
-    color inter = hsl_to_rgb({182, 5, 8, 100});
-    color Color = normalize_color(inter);
+    setbackgroundColorHSL({182, 5, 8, 100});
+}
 
+void ren::setBackgroundColorRGB(const color &rgb_color)
+{
+    color Color = normalize_color(rgb_color);
+    glClearColor(Color.x, Color.y, Color.z, Color.a);
+}
+
+void ren::setbackgroundColorHSL(const hsl_color &Hsl_Color)
+{
+    color Color = normalize_hsl(Hsl_Color);
     glClearColor(Color.r, Color.g, Color.b, Color.a);
 }
 
-void ren::begin_Im()
+void ren::setBackgroundColor(const color &Color)
 {
-    Shader *shader = shaderList.list[SHADER_BASIC];
+    setBackgroundColorRGB(Color);
+}
+
+void ren::begin_Im(s32 ShaderType)
+{
+    Shader *shader = shaderList.list[ShaderType];
     shader->Bind();
 
-    mat4x4 projection =
-        create_orthographic_mat(0.0f, 1280, 720, 0.0f, 1.0f, -1.0f);
-    shader->SetUniformMat4("u_Projection", projection);
+    shader->SetUniformMat4("u_Projection", m_Projection);
+}
+
+void ren::end_Im()
+{
+    ren::flush();
 }
 
 void ren::flush()
@@ -101,16 +140,11 @@ void ren::quad_Im(f32 x0, f32 y0, f32 x1, f32 y1, color Color)
     num_vertices += 6;
 }
 
-void ren::put_vertex(Vertex *vert, v2 position, color Color)
+void ren::put_vertex(Vertex *vert, v2 position, color Color, v2 uv)
 {
     vert->position = {position.x, position.y, 0};
     vert->color    = Color;
-}
-
-void ren::end_Im()
-{
-    ren::flush();
-    shaderList.list[SHADER_BASIC]->Unbind();
+    vert->uv0      = uv;
 }
 
 void ren::add_shader_Im(Shader *current_shader, shader_types type)
@@ -123,4 +157,23 @@ void ren::add_shader_Im(Shader *current_shader, shader_types type)
 
     shaderList.list[type] = current_shader;
     shaderList.count += 1;
+}
+
+void ren::quad_texture_Im(f32 x0, f32 y0, f32 x1, f32 y1, color Color, v2 uv)
+{
+    if (num_vertices > (max_vertex_count - 6))
+    {
+        flush();
+    }
+
+    Vertex *v = vertex_list + num_vertices;
+    put_vertex(&v[0], {x1, y0}, Color, uv);
+    put_vertex(&v[1], {x0, y0}, Color, uv);
+    put_vertex(&v[2], {x1, y1}, Color, uv);
+
+    put_vertex(&v[3], {x1, y1}, Color, uv);
+    put_vertex(&v[4], {x0, y0}, Color, uv);
+    put_vertex(&v[5], {x0, y1}, Color, uv);
+
+    num_vertices += 6;
 }

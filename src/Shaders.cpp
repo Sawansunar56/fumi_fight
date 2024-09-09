@@ -12,6 +12,7 @@ Shader::Shader(const char *vertexShaderPath, const char *fragmentShaderPath)
 void Shader::Init(const char *vertexShaderPath, const char *fragmentShaderPath)
 {
     m_Id = createShaderProgram(vertexShaderPath, fragmentShaderPath);
+    isInitialized = true;
 }
 
 Shader::~Shader() { glDeleteProgram(m_Id); }
