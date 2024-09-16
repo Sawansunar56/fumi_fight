@@ -1,4 +1,3 @@
-
 inline v2 operator+(v2 a, v2 b)
 {
     v2 result = {};
@@ -565,6 +564,209 @@ inline v4i &operator*=(v4i &a, f32 b)
 {
     a = a * b;
     return a;
+}
+
+inline v2i16 operator+(v2i16 a, v2i16 b)
+{
+    v2i16 result = {};
+
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+
+    return result;
+}
+
+inline v2i16 operator-(v2i16 a, v2i16 b)
+{
+    v2i16 result = {};
+
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+
+    return result;
+}
+
+inline v2i16 operator-(v2i16 a)
+{
+    v2i16 Result = {};
+
+    Result.x = -a.x;
+    Result.y = -a.y;
+
+    return Result;
+}
+
+inline v2i16 operator*(v2i16 a, i16 b)
+{
+    v2i16 result = {};
+
+    result.x = a.x * b;
+    result.y = a.y * b;
+
+    return result;
+}
+
+inline v2i16 &operator+=(v2i16 &a, v2i16 b)
+{
+    a = a + b;
+    return a;
+}
+
+inline v2i16 &operator-=(v2i16 &a, v2i16 b)
+{
+    a = a - b;
+    return a;
+}
+
+inline v2i16 &operator*=(v2i16 &a, i16 b)
+{
+    a = a * b;
+    return a;
+}
+
+inline v3i16 operator+(v3i16 a, v3i16 b)
+{
+    v3i16 result = {};
+
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
+
+    return result;
+}
+
+inline v3i16 operator-(v3i16 a, v3i16 b)
+{
+    v3i16 result = {};
+
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    result.z = a.z - b.z;
+
+    return result;
+}
+
+inline v3i16 operator-(v3i16 a)
+{
+    v3i16 Result = {};
+
+    Result.x = -a.x;
+    Result.y = -a.y;
+    Result.z = -a.z;
+
+    return Result;
+}
+
+inline v3i16 operator*(v3i16 a, i16 b)
+{
+    v3i16 result = {};
+
+    result.x = a.x * b;
+    result.y = a.y * b;
+    result.z = a.z * b;
+
+    return result;
+}
+
+inline v3i16 &operator+=(v3i16 &a, v3i16 b)
+{
+    a = a + b;
+    return a;
+}
+
+inline v3i16 &operator-=(v3i16 &a, v3i16 b)
+{
+    a = a - b;
+    return a;
+}
+
+inline v3i16 &operator*=(v3i16 &a, i16 b)
+{
+    a = a * b;
+    return a;
+}
+
+inline v4i16 operator+(v4i16 a, v4i16 b)
+{
+    v4i16 result = {};
+
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
+    result.w = a.w + b.w;
+
+    return result;
+}
+
+inline v4i16 operator-(v4i16 a, v4i16 b)
+{
+    v4i16 result = {};
+
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    result.z = a.z - b.z;
+    result.w = a.w - b.w;
+
+    return result;
+}
+
+inline v4i16 operator-(v4i16 a)
+{
+    v4i16 Result = {};
+
+    Result.x = -a.x;
+    Result.y = -a.y;
+    Result.z = -a.z;
+    Result.w = -a.w;
+
+    return Result;
+}
+
+inline v4i16 operator*(v4i16 a, i16 b)
+{
+    v4i16 result = {};
+
+    result.x = a.x * b;
+    result.y = a.y * b;
+    result.z = a.z * b;
+    result.w = a.w * b;
+
+    return result;
+}
+
+inline v4i16 &operator+=(v4i16 &a, v4i16 b)
+{
+    a = a + b;
+    return a;
+}
+
+inline v4i16 &operator-=(v4i16 &a, v4i16 b)
+{
+    a = a - b;
+    return a;
+}
+
+inline v4i16 &operator*=(v4i16 &a, i16 b)
+{
+    a = a * b;
+    return a;
+}
+// NOTE: The forever temptation to use SIMD even though I don't have a complete
+// picture of the architecture. Brother just write plain code you don't need that
+// performance.
+inline mat4x4 identity_mat()
+{
+    mat4x4 Result = {};
+
+    // TODO: Check the inlined asm code to know whether this gets inlined or not.
+    for(i32 i = 0;
+            i < 4;
+            i++)
+    {
+        Result[i][i] = 1;
+    }
+
+    return Result;
 }
 
 inline mat4x4 create_projection_mat(f32 fov, f32 aspect, f32 near, f32 far)

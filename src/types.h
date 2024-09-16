@@ -1,12 +1,12 @@
 #pragma once
 #include <cstdint>
 
-typedef uint8_t u8;
+typedef uint8_t  u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
-typedef int8_t i8;
+typedef int8_t  i8;
 typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
@@ -21,11 +21,11 @@ typedef i16 b16;
 typedef i32 b32;
 typedef i64 b64;
 
-typedef float f32;
+typedef float  f32;
 typedef double f64;
 
-typedef u64 umm;
-typedef s64 smm;
+typedef uintptr_t umm;
+typedef intptr_t  smm;
 
 #define internals     static
 #define global_var    static
@@ -64,28 +64,30 @@ constexpr u64 MAX_U64 = 0xffffffffffffffff;
 #if NDEBUG
 #if _MSC_VER
 #include <cstdio>
-#define Assert(Expression)                                                     \
+#define Assert(Expression, ...)                                                \
     if (!(Expression))                                                         \
     {                                                                          \
-        printf("[ASSERT]: %s, file %s, line %d\n",                             \
+        printf("[ASSERT]: %s, file %s, line %d, \n[ERROR MSG] %s\n",           \
                #Expression,                                                    \
                __FILE__,                                                       \
-               __LINE__);                                                      \
+               __LINE__,                                                       \
+               __VA_ARGS__);                                                   \
         __debugbreak();                                                        \
     }
 #else
 #include <cstdio>
 #include <signal.h>
-#define Assert(Expression)                                                     \
+#define Assert(Expression, ...)                                                \
     if (!(Expression))                                                         \
     {                                                                          \
-        printf("[ASSERT]: %s, file %s, line %d\n",                             \
+        printf("[ASSERT]: %s, file %s, line %d, \n[ERROR MSG] %s\n",           \
                #Expression,                                                    \
                __FILE__,                                                       \
-               __LINE__);                                                      \
+               __LINE__,                                                       \
+               __VA_ARGS__);                                                   \
         raise(SIGTRAP)                                                         \
     }
 #endif
 #else
-#define Assert(Expression)
+#define Assert(Expression, ...)
 #endif

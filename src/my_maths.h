@@ -6,7 +6,8 @@
 constexpr f32 Pi32  = 3.14159265359f;
 constexpr f32 Tau32 = 6.28318530717958647692f;
 
-union v2 {
+
+union v2f32 {
     struct
     {
         f32 x, y;
@@ -19,7 +20,7 @@ union v2 {
     f32 E[2];
 };
 
-union v3 {
+union v3f32 {
     struct
     {
         f32 x, y, z;
@@ -32,7 +33,7 @@ union v3 {
     f32 E[3];
 };
 
-union v4 {
+union v4f32 {
     struct
     {
         f32 x, y, z, w;
@@ -51,7 +52,7 @@ union v4 {
     f32 E[4];
 };
 
-union v2d {
+union v2f64 {
     struct
     {
         f64 x, y;
@@ -64,7 +65,7 @@ union v2d {
     f64 E[2];
 };
 
-union v3d {
+union v3f64 {
     struct
     {
         f64 x, y, z;
@@ -77,7 +78,7 @@ union v3d {
     f64 E[3];
 };
 
-union v4d {
+union v4f64 {
     struct
     {
         f64 x, y, z, w;
@@ -90,7 +91,7 @@ union v4d {
     f64 E[4];
 };
 
-union v2i {
+union v2i32 {
     struct
     {
         i32 x, y;
@@ -103,7 +104,7 @@ union v2i {
     i32 E[2];
 };
 
-union v3i {
+union v3i32 {
     struct
     {
         i32 x, y, z;
@@ -116,7 +117,7 @@ union v3i {
     i32 E[3];
 };
 
-union v4i {
+union v4i32 {
     struct
     {
         i32 x, y, z, w;
@@ -140,6 +141,60 @@ union mat4x4 {
         return E[index];
     }
 };
+
+union v2i16 {
+    struct {
+        i16 x, y;
+    };
+    i16 E[2];
+};
+
+union v3i16 {
+    struct {
+        i16 x, y, z;
+    };
+    i16 E[3];
+};
+
+union v4i16 {
+    struct {
+        i16 x, y, z, w;
+    };
+    i16 E[4];
+};
+
+union v2i64 {
+    struct {
+        i64 x, y;
+    };
+    i64 E[2];
+};
+
+union v3i64 {
+    struct {
+        i64 x, y, z;
+    };
+    i64 E[3];
+};
+
+union v4i64 {
+    struct {
+        i64 x, y, z, w;
+    };
+    i64 E[4];
+};
+
+typedef v2f32 v2;
+typedef v3f32 v3;
+typedef v4f32 v4;
+
+typedef v2f64 v2d;
+typedef v3f64 v3d;
+typedef v4f64 v4d;
+
+typedef v2i32 v2i;
+typedef v3i32 v3i;
+typedef v4i32 v4i;
 
 typedef v4 color;
 typedef v4 hsl_color;

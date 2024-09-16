@@ -2,8 +2,12 @@
 #include "arena.h"
 #include "ren_types.h"
 #include "my_maths.h"
+#include "texture.h"
 
 class Shader;
+
+constexpr u16 MAX_VERT_COUNT  = 5000;
+constexpr u8 MAX_TEXTURE_SLOT = 30;
 
 enum shader_types
 {
@@ -59,11 +63,31 @@ class ren
         return Get().add_shader_Im(currentShader, types);
     }
 
-    static void begin_texture_mode() { return Get().begin_Im(SHADER_TEXTURE); }
-    static void end_texture_mode() { return Get().end_Im(); }
-    static void quad_texture(f32 x0, f32 y0, f32 x1, f32 y1, color Color, v2 uv)
+    static void begin_texture_mode()
     {
-        return Get().quad_texture_Im(x0, y0, x1, y1, Color, uv);
+        return Get().begin_texture_mode_Im(SHADER_TEXTURE);
+    }
+    static void end_texture_mode() { return Get().end_texture_mode_Im(); }
+    static void quad_texture(f32 x0,
+                             f32 y0,
+                             f32 x1,
+                             f32 y1,
+                             color Color,
+                             v4 uv,
+                             Texture2D *texture)
+    {
+        return Get().quad_texture_Im(x0, y0, x1, y1, Color, uv, texture);
+    }
+    static void
+    quad_texture(v3 min, v3 max, color Color, v4 uv, Texture2D *texture)
+    {
+        return Get().quad_texture_Im(min.x,
+                                     min.y,
+                                     min.x + max.x,
+                                     min.y + max.y,
+                                     Color,
+                                     uv,
+                                     texture);
     }
 
   private:
@@ -76,9 +100,23 @@ class ren
                 f32,
                 f32,
                 color); // note(sown): This is about points not width and height
-    void quad_texture_Im(f32 x0, f32 y0, f32 x1, f32 y1, color Color, v2 uv);
+    void quad_texture_Im(f32 x0,
+                         f32 y0,
+                         f32 x1,
+                         f32 y1,
+                         color Color,
+                         v4 uv,
+                         Texture2D *texture);
     void flush();
+    void begin_texture_mode_Im(s32 ShaderType);
+    void end_texture_mode_Im();
+    void texture_flush();
     void put_vertex(Vertex *, v2 position, color Color, v2 uv = {0, 0});
+    void put_vertex(Vertex *vert,
+                    v2 position,
+                    color Color,
+                    f32 texture_index,
+                    v2 uv);
     void add_shader_Im(Shader *currentShader, shader_types types);
 
   private:
@@ -90,7 +128,11 @@ class ren
     s32 num_vertices;
     s32 current_vertex_per_primitive;
     s32 max_vertex_count;
+    s32 texture_samplers[MAX_TEXTURE_SLOT];
+    s32 draw_call;
 
+    Texture2D *textures[MAX_TEXTURE_SLOT];
+    s32 texture_slot_index;
     mat4x4 m_Projection;
 
     ren_shaders shaderList;

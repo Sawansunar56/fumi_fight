@@ -15,6 +15,8 @@ class Shader
     void Unbind() const;
     void SetUniformFloat3(const char *name, f32 x, f32 y, f32 z) const;
     void SetUniformMat4(const std::string &name, const mat4x4 &matrix);
+    void SetInt(const std::string &name, s32 Id);
+    void SetIntArray(const std::string &name, s32 *array, s32 array_count);
 
   public:
     b8 isInitialized;

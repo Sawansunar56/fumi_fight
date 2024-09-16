@@ -96,3 +96,15 @@ void Shader::SetUniformMat4(const std::string &name, const mat4x4 &matrix) {
     GLint location = glGetUniformLocation(m_Id, name.c_str());
     glUniformMatrix4fv(location, 1, GL_FALSE, &matrix[0][0]);
 }
+
+void Shader::SetInt(const std::string &name, s32 Id)
+{
+    GLint location = glGetUniformLocation(m_Id, name.c_str());
+    glUniform1i(location, Id);
+}
+
+void Shader::SetIntArray(const std::string &name, s32 *array, s32 array_count)
+{
+    GLint location = glGetUniformLocation(m_Id, name.c_str());
+    glUniform1iv(location, array_count, array);
+}
