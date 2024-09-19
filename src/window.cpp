@@ -27,7 +27,7 @@ Window::Window(u32 width, u32 height, std::string title)
 {
     if (!Init())
     {
-        printf("couldn't init");
+        printf("couldn't initialize glfw window");
     }
 }
 

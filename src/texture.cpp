@@ -15,7 +15,7 @@ void Texture2D::loadTexture(const std::string &filename)
     std::filesystem::path texturePath(filename);
     std::string something = std::filesystem::absolute(texturePath).string();
 
-    stbi_set_flip_vertically_on_load(true);
+    // stbi_set_flip_vertically_on_load(true);
 
     u8 *data = stbi_load(something.c_str(), &width, &height, &channels, 0);
     Assert(data, "failed to load image!");
@@ -44,15 +44,9 @@ void Texture2D::loadTexture(const std::string &filename)
     glTexParameteri(textureId, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(textureId, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    glTextureSubImage2D(textureId,
-                        0,
-                        0,
-                        0,
-                        m_width,
-                        m_height,
-                        m_DataFormat,
-                        GL_UNSIGNED_BYTE,
-                        data);
+    glTextureSubImage2D(textureId, 0, 0, 0,
+                        m_width, m_height, m_DataFormat,
+                        GL_UNSIGNED_BYTE, data);
 
     stbi_image_free(data);
     isInitialized = true;

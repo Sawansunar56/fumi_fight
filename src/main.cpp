@@ -31,7 +31,6 @@ int main()
     while (main_window.ShouldClose())
     {
         main_window.Update();
-
         update_and_render(&game_state);
     }
     ArenaRelease(mainArena);
