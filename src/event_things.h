@@ -14,6 +14,7 @@ enum event_type
 struct event 
 {
     event_type Type;
+    u32 keycode;
 };
 
 struct event_node
@@ -33,3 +34,4 @@ struct event_list
 
 void push_events(Arena* arena, event_list* list, event *v);
 void pop_events(event_list* list, event_node* node);
+void clear_event_list(event_list* list);

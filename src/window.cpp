@@ -3,25 +3,6 @@
 #include "window.h"
 #include <cstdio>
 
-void keyHandler(GLFWwindow *window, s32 key, s32 scancode, s32 action, s32 mods)
-{
-    Window *win_data = static_cast<Window *>(glfwGetWindowUserPointer(window));
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    {
-        win_data->StopRunning();
-    }
-}
-
-void mouseHandler(GLFWwindow *window, s32 button, s32 action, s32 mods) 
-{
-    
-}
-
-void framebuffer_size_callback(GLFWwindow *window, s32 width, s32 height)
-{
-    glViewport(0, 0, width, height);
-}
-
 Window::Window(u32 width, u32 height, std::string title)
     : m_Height{height}, m_Width{width}, m_Title{title}, m_running{true}
 {
@@ -56,9 +37,49 @@ b32 Window::Init()
     }
 
     glfwMakeContextCurrent(m_Window);
-    glfwSetKeyCallback(m_Window, keyHandler);
-    glfwSetMouseButtonCallback(m_Window, mouseHandler);
-    glfwSetFramebufferSizeCallback(m_Window, framebuffer_size_callback);
+
+    glfwSetKeyCallback(
+        m_Window,
+        [](GLFWwindow *window, s32 key, s32 scancode, s32 action, s32 mods) {
+            Window *win_data =
+                static_cast<Window *>(glfwGetWindowUserPointer(window));
+            if (action == GLFW_PRESS)
+            {
+                if (key == GLFW_KEY_ESCAPE)
+                {
+                    win_data->StopRunning();
+                }
+                else
+                {
+                    event Event   = {};
+                    Event.keycode = key;
+                    Event.Type    = ET_PRESS;
+
+                    push_events(win_data->mainArena,
+                                win_data->EventList,
+                                &Event);
+                }
+            }
+
+            if (action == GLFW_RELEASE)
+            {
+                event Event   = {};
+                Event.keycode = key;
+                Event.Type    = ET_RELEASE;
+
+                push_events(win_data->mainArena, win_data->EventList, &Event);
+            }
+        });
+
+    glfwSetMouseButtonCallback(
+        m_Window,
+        [](GLFWwindow *window, s32 button, s32 action, s32 mods) {});
+
+    glfwSetFramebufferSizeCallback(
+        m_Window,
+        [](GLFWwindow *window, s32 width, s32 height) {
+            glViewport(0, 0, width, height);
+        });
 
     glfwSetWindowUserPointer(m_Window, this);
 

@@ -9,10 +9,13 @@ void ren::Init_Im(Arena *arena)
 {
     this->vert_arr_id                  = 0;
     this->vert_buf_id                  = 0;
-    this->num_vertices                 = 0;
     this->current_vertex_per_primitive = 3;
+    this->num_vertices                 = 0;
+    this->num_indices                  = 0;
     this->max_vertex_count             = MAX_VERT_COUNT;
+    this->max_index_count              = MAX_INDEX_COUNT;
     this->vertex_list        = PushArray(arena, this->max_vertex_count, Vertex);
+    this->index_list         = PushArray(arena, this->max_index_count, u32);
     this->shaderList.list    = PushArray(arena, SHADER_MAX, Shader *);
     this->shaderList.maximum = SHADER_MAX;
 
@@ -46,33 +49,23 @@ void ren::Init_Im(Arena *arena)
     glCreateBuffers(1, &vert_buf_id);
     glBindBuffer(GL_ARRAY_BUFFER, vert_buf_id);
 
+    glCreateBuffers(1, &index_buf_id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buf_id);
+
     // TODO: include uv as well but use index buffer to reserve on memory.
-    glVertexAttribPointer(0,
-                          sizeof(Vertex::position) / sizeof(f32),
-                          GL_FLOAT,
-                          GL_FALSE,
-                          sizeof(Vertex),
+    glVertexAttribPointer(0, sizeof(Vertex::position) / sizeof(f32),
+                          GL_FLOAT, GL_FALSE, sizeof(Vertex),
                           (void *)(offsetof(Vertex, position)));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1,
-                          sizeof(Vertex::color) / sizeof(f32),
-                          GL_FLOAT,
-                          GL_FALSE,
-                          sizeof(Vertex),
+    glVertexAttribPointer(1, sizeof(Vertex::color) / sizeof(f32),
+                          GL_FLOAT, GL_FALSE, sizeof(Vertex),
                           (void *)(offsetof(Vertex, color)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2,
-                          sizeof(Vertex::uv0) / sizeof(f32),
-                          GL_FLOAT,
-                          GL_FALSE,
-                          sizeof(Vertex),
+    glVertexAttribPointer(2, sizeof(Vertex::uv0) / sizeof(f32),
+                          GL_FLOAT, GL_FALSE, sizeof(Vertex),
                           (void *)(offsetof(Vertex, uv0)));
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(3,
-                          1,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          sizeof(Vertex),
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                           (void *)(offsetof(Vertex, texture_index)));
     glEnableVertexAttribArray(3);
 
@@ -124,46 +117,69 @@ void ren::end_Im() { ren::flush(); }
 void ren::flush()
 {
     this->draw_call += 1;
-    if (!num_vertices)
+    if (!num_vertices || !num_indices)
     {
         return;
     }
 
     Vertex *v = vertex_list;
+    u32 *i    = index_list;
 
     glBindBuffer(GL_ARRAY_BUFFER, vert_buf_id);
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, some_ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buf_id);
 
     glBufferData(GL_ARRAY_BUFFER,
                  sizeof(v[0]) * num_vertices,
                  v,
-                 GL_STREAM_DRAW);
+                 GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 sizeof(i[0]) * num_indices,
+                 i,
+                 GL_STATIC_DRAW);
 
     if (current_vertex_per_primitive == 3)
     {
-        glDrawArrays(GL_TRIANGLES, 0, num_vertices);
+        // glDrawArrays(GL_TRIANGLES, 0, num_vertices);
+        glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, nullptr);
     }
     num_vertices = 0;
+    num_indices  = 0;
 }
 
 void ren::quad_Im(f32 x0, f32 y0, f32 x1, f32 y1, color Color)
 {
-    if (num_vertices > (max_vertex_count - 6))
+    if (num_vertices > (max_vertex_count - 4) ||
+        num_indices > (max_index_count - 6))
     {
         flush();
     }
 
     Vertex *v = vertex_list + num_vertices;
+    u32 *i    = index_list + num_indices;
 
-    put_vertex(&v[0], {x1, y0}, Color);
-    put_vertex(&v[1], {x0, y0}, Color);
+    // put_vertex(&v[0], {x1, y0}, Color);
+    // put_vertex(&v[1], {x0, y0}, Color);
+    // put_vertex(&v[2], {x1, y1}, Color);
+    //
+    // put_vertex(&v[3], {x1, y1}, Color);
+    // put_vertex(&v[4], {x0, y0}, Color);
+    // put_vertex(&v[5], {x0, y1}, Color);
+    put_vertex(&v[0], {x0, y0}, Color);
+    put_vertex(&v[1], {x1, y0}, Color);
     put_vertex(&v[2], {x1, y1}, Color);
+    put_vertex(&v[3], {x0, y1}, Color);
 
-    put_vertex(&v[3], {x1, y1}, Color);
-    put_vertex(&v[4], {x0, y0}, Color);
-    put_vertex(&v[5], {x0, y1}, Color);
+    i[0] = num_indices + 1;
+    i[1] = num_indices + 0;
+    i[2] = num_indices + 2;
+    i[3] = num_indices + 2;
+    i[4] = num_indices + 0;
+    i[5] = num_indices + 3;
 
-    num_vertices += 6;
+    // top_right, top_left, bottom_right, bottom_right, top_left, bottom_left
+
+    num_vertices += 4;
+    num_indices += 6;
 }
 
 void ren::put_vertex(Vertex *vert, v2 position, color Color, v2 uv)
@@ -237,7 +253,8 @@ void ren::quad_texture_Im(f32 x0,
                           Texture2D *texture)
 {
     f32 tex_index = -1.0f;
-    if (num_vertices > (max_vertex_count - 6))
+    if (num_vertices > (max_vertex_count - 4) ||
+        num_indices > (max_index_count - 6))
     {
         flush();
     }
@@ -259,8 +276,8 @@ void ren::quad_texture_Im(f32 x0,
         // value is found in the list. It causes the thing to override if you
         // finally can't find the value in it starting from zero.
         // CLEAN: Not removing the above comment because I don't really know if
-        // incrementing the slot index would fix the problem in edge cases, maybe
-        // even introduce a new bug. 
+        // incrementing the slot index would fix the problem in edge cases,
+        // maybe even introduce a new bug.
         if (texture_slot_index >= MAX_TEXTURE_SLOT)
         {
             texture_flush();
@@ -272,14 +289,31 @@ void ren::quad_texture_Im(f32 x0,
     }
 
     Vertex *v = vertex_list + num_vertices;
+    u32 *i    = index_list + num_indices;
     // NOTE: This is pretty unreadable now. Make sure to clean this up somehow.
-    put_vertex(&v[0], {x1, y0}, Color, tex_index, {uv.z, uv.y});
-    put_vertex(&v[1], {x0, y0}, Color, tex_index, {uv.x, uv.y});
+    // put_vertex(&v[0], {x1, y0}, Color, tex_index, {uv.z, uv.y});
+    // put_vertex(&v[1], {x0, y0}, Color, tex_index, {uv.x, uv.y});
+    // put_vertex(&v[2], {x1, y1}, Color, tex_index, {uv.z, uv.w});
+    //
+    // put_vertex(&v[3], {x1, y1}, Color, tex_index, {uv.z, uv.w});
+    // put_vertex(&v[4], {x0, y0}, Color, tex_index, {uv.x, uv.y});
+    // put_vertex(&v[5], {x0, y1}, Color, tex_index, {uv.x, uv.w});
+
+    // top_right, top_left, bottom_right, bottom_right, top_left, bottom_left
+    // 1, 0, 2, 2, 0, 3
+    // 5, 4, 6, 6, 4, 7
+    put_vertex(&v[0], {x0, y0}, Color, tex_index, {uv.x, uv.y});
+    put_vertex(&v[1], {x1, y0}, Color, tex_index, {uv.z, uv.y});
     put_vertex(&v[2], {x1, y1}, Color, tex_index, {uv.z, uv.w});
+    put_vertex(&v[3], {x0, y1}, Color, tex_index, {uv.x, uv.w});
 
-    put_vertex(&v[3], {x1, y1}, Color, tex_index, {uv.z, uv.w});
-    put_vertex(&v[4], {x0, y0}, Color, tex_index, {uv.x, uv.y});
-    put_vertex(&v[5], {x0, y1}, Color, tex_index, {uv.x, uv.w});
+    i[0] = num_vertices + 1;
+    i[1] = num_vertices + 0;
+    i[2] = num_vertices + 2;
+    i[3] = num_vertices + 2;
+    i[4] = num_vertices + 0;
+    i[5] = num_vertices + 3;
 
-    num_vertices += 6;
+    num_vertices += 4;
+    num_indices += 6;
 }

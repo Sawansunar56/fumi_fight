@@ -6,7 +6,9 @@
 
 class Shader;
 
-constexpr u16 MAX_VERT_COUNT  = 5000;
+constexpr u32 MAX_QUAD_COUNT  = 20000;
+constexpr u32 MAX_VERT_COUNT  = MAX_QUAD_COUNT * 4;
+constexpr u32 MAX_INDEX_COUNT = MAX_QUAD_COUNT * 6;
 constexpr u8 MAX_TEXTURE_SLOT = 30;
 
 enum shader_types
@@ -122,15 +124,22 @@ class ren
   private:
     ren() {}
     static ren s_Instance;
+
     Vertex *vertex_list;
+    u32 *index_list;
     u32 vert_arr_id;
     u32 vert_buf_id;
+    u32 index_buf_id;
     s32 num_vertices;
+    s32 num_indices;
+
     s32 current_vertex_per_primitive;
     s32 max_vertex_count;
-    s32 texture_samplers[MAX_TEXTURE_SLOT];
+    s32 max_index_count;
+
     s32 draw_call;
 
+    s32 texture_samplers[MAX_TEXTURE_SLOT];
     Texture2D *textures[MAX_TEXTURE_SLOT];
     s32 texture_slot_index;
     mat4x4 m_Projection;

@@ -11,5 +11,8 @@ void push_events(Arena *arena, event_list *list, event *v)
 void pop_events(event_list *list, event_node *node) 
 {
     DLLRemove(list->first, list->last, node);
-    list->count++;
+    list->count--;
+}
+void clear_event_list(event_list* list)
+{
 }
