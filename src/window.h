@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "my_maths.h"
 #include "event_things.h"
 #include <string>
 
@@ -13,10 +14,14 @@ class Window
     b32 Init();
     b32 ShouldClose() const;
     void Update() const;
+    inline v2 GetWindowDimensions() const 
+    {
+        return {static_cast<f32>(m_Width), static_cast<f32>(m_Height)};
+    }
     inline GLFWwindow *GetNativeWindow() { return m_Window; }
     inline void StopRunning() { m_running = false; }
     inline void setEventList(event_list *list) { EventList = list; }
-    inline void setArena(Arena* arena) { mainArena = arena; };
+    inline void setArena(Arena *arena) { mainArena = arena; };
 
   private:
     GLFWwindow *m_Window;

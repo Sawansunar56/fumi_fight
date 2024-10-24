@@ -1,5 +1,6 @@
 @echo off
 
 pushd res
-devenv /debugexe ..\build\main.exe
+
+..\build\main.exe
 popd

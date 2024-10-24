@@ -2,9 +2,24 @@
 #include "push_render.h"
 #include "window.h"
 #include "texture.h"
+#include "log.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <vector>
+
+// Colors specified here
+constexpr v4 WHITE      = {1.0f, 1.0f, 1.0f, 1.0f};
+constexpr v4 RED        = {1.0f, 0.0f, 0.0f, 1.0f};
+constexpr v4 BLUE       = {0.0f, 0.0f, 1.0f, 1.0f};
+constexpr v4 GREEN      = {0.0f, 1.0f, 0.0f, 1.0f};
+constexpr v4 BLACK      = {0.0f, 0.0f, 0.0f, 1.0f};
+constexpr v4 CYAN       = {0.0f, 1.0f, 1.0f, 1.0f};
+constexpr v4 YELLOW    =  {1.0f, 1.0f, 0.0f, 1.0f};
+constexpr v4 PURPLE     = {1.0f, 0.0f, 1.0f, 1.0f};
+constexpr v4 TEAL       = {0.0f, 0.502f, 0.502f, 1.0f};
+constexpr v4 VIOLET     = {(128.0f / 255.0f), 0.0f, 1.0f, 1.0f};
+constexpr v4 CRIMSON   = {0.863f, 0.078f, 0.235f, 1.0f};
+constexpr v4 ROYAL_BLUE = {0.255f, 0.412f, 0.882f, 1.0f};
 
 struct Entity
 {
@@ -39,6 +54,15 @@ struct game_data
     world_data *World;
 };
 
+// NOTE: THINK ABOUT HANDLING THIS. Probably I need a global hash for texture
+// use.
+enum TEXT_NAME_
+{
+    TEXT_NAME_USELESS,
+    TEXT_NAME_SOMETHING,
+    TEXT_NAME_PLAYER
+};
+
 struct Frame
 {
     f32 u, v, width, height;
@@ -66,14 +90,13 @@ loadFrames(s32 frameWidth, s32 frameHeight, s32 atlasWidth, s32 atlasHeight)
 void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
 {
     entity->velocity.x += entity->acceleration.x * dt;
-
-    if (entity->acceleration.x == 0)
+    entity->velocity.x -= entity->velocity.x * World->world_friction * dt;
+    if (abs(entity->velocity.x) < 0.01)
     {
-        entity->velocity.x *= World->world_friction;
+        entity->velocity.x = 0.0f;
     }
-
     entity->position.x += entity->velocity.x * dt;
-    std::cout << entity->velocity.x << " \n";
+    LOG_INFO("%f what is dt %f\n", entity->velocity.x, dt);
 }
 
 global_var f32 timeCount = 0;
@@ -96,12 +119,13 @@ internals void update_and_render(game_data *game_state, f32 dt)
 
         // Texture loadint should be in here
         Texture2D *textures = game_state->textureList;
-        textures[0].loadTexture("./textures/grad_circle.png");
-        textures[1].loadTexture("./textures/something.png");
+        textures[TEXT_NAME_USELESS].loadTexture("./textures/grad_circle.png");
+        textures[TEXT_NAME_SOMETHING].loadTexture("./textures/something.png");
 
         // NOTE: Maybe there should be a specifier to know if a texture is an
         // atlas or not and then have appropriate data related to it.
-        textures[2].loadTexture("./textures/character_sheet/char_blue_1.png");
+        textures[TEXT_NAME_PLAYER].loadTexture(
+            "./textures/character_sheet/char_blue_1.png");
 
         Assert(game_state->textureListCount < MAX_CAP_TEXTURES,
                "maximum texture count reached, expand capacity");
@@ -124,15 +148,16 @@ internals void update_and_render(game_data *game_state, f32 dt)
         game_state->Player.position = {10, 10, 0};
         game_state->Player.velocity = {};
 
-        game_state->World->world_friction = 0.2f;
+        game_state->World->world_friction = 0.9f;
         game_state->isInitialized         = true;
     }
+    v2 windowDim = game_state->main_window->GetWindowDimensions();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     Entity *Player = &game_state->Player;
 
-    f32 accelerationFactor = 10.0f;
+    f32 accelerationFactor = 100.0f;
     for (event_node *node = game_state->EventList->first; node != 0;
          node             = node->next)
     {
@@ -168,15 +193,20 @@ internals void update_and_render(game_data *game_state, f32 dt)
 
     Texture2D *textures = game_state->textureList;
     ren::begin();
-    ren::quad({100, 100}, {200, 200}, {0.23f, 0.54f, 0.233f, 1.0f});
+    ren::quad({100, 100}, {200, 200}, TEAL);
     ren::end();
 
     ren::begin_texture_mode();
+    ren::quad_texture({0, 0},
+                      {windowDim.x, windowDim.y},
+                      WHITE,
+                      {0.0f, 0.0f, 1.0f, 1.0f},
+                      &textures[TEXT_NAME_USELESS]);
     ren::quad_texture({200, 200},
                       {100, 100},
-                      {1.0f, 1.0f, 1.0f, 1.0f},
+                      WHITE,
                       {0.0f, 0.0f, 1.0f, 1.0f},
-                      &textures[0]);
+                      &textures[TEXT_NAME_USELESS]);
 
     i32 atlasHeight = 616;
     i32 atlasWidth  = 448;
@@ -196,7 +226,7 @@ internals void update_and_render(game_data *game_state, f32 dt)
                       {100, 100},
                       {1.0f, 1.0f, 1.0f, 1.0f},
                       uv,
-                      &textures[2]);
+                      &textures[TEXT_NAME_PLAYER]);
     ren::end_texture_mode();
     timeCount += 0.03f;
     if (timeCount > 16)
