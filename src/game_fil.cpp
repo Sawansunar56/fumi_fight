@@ -5,7 +5,6 @@
 #include "log.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <vector>
 
 // Colors specified here
 constexpr v4 WHITE      = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -14,13 +13,45 @@ constexpr v4 BLUE       = {0.0f, 0.0f, 1.0f, 1.0f};
 constexpr v4 GREEN      = {0.0f, 1.0f, 0.0f, 1.0f};
 constexpr v4 BLACK      = {0.0f, 0.0f, 0.0f, 1.0f};
 constexpr v4 CYAN       = {0.0f, 1.0f, 1.0f, 1.0f};
-constexpr v4 YELLOW    =  {1.0f, 1.0f, 0.0f, 1.0f};
+constexpr v4 YELLOW     = {1.0f, 1.0f, 0.0f, 1.0f};
 constexpr v4 PURPLE     = {1.0f, 0.0f, 1.0f, 1.0f};
 constexpr v4 TEAL       = {0.0f, 0.502f, 0.502f, 1.0f};
 constexpr v4 VIOLET     = {(128.0f / 255.0f), 0.0f, 1.0f, 1.0f};
-constexpr v4 CRIMSON   = {0.863f, 0.078f, 0.235f, 1.0f};
+constexpr v4 CRIMSON    = {0.863f, 0.078f, 0.235f, 1.0f};
 constexpr v4 ROYAL_BLUE = {0.255f, 0.412f, 0.882f, 1.0f};
 
+enum PlayerAnimations_
+{
+    PlayerAnimations_Idle,
+    PlayerAnimations_Attack,
+    PlayerAnimations_Run,
+    PlayerAnimations_Jump,
+    PlayerAnimations_Fall,
+    PlayerAnimations_Hit,
+    PlayerAnimations_Perish,
+    PlayerAnimations_DeathIdle,
+    PlayerAnimations_EnergyGenerate,
+    PlayerAnimations_Crouch,
+    PlayerAnimations_Dodge,
+    PlayerAnimations_FINAL
+};
+
+// NOTE: I might need a higher structure which shifts between flipbooks.
+struct SpriteFlipbook
+{
+    Texture2D *spriteAtlas;
+    v4 *uv;
+    u32 spriteCount;
+    f32 frame_duration;
+    u32 current_frame;
+    f32 animation_time;
+};
+
+struct EntityAnimations
+{
+    SpriteFlipbook *animations;
+    u32 animationCount;
+};
 struct Entity
 {
     u64 Id;
@@ -29,7 +60,8 @@ struct Entity
     v3 velocity;
     v3 acceleration;
 
-    Texture2D *entity_texture;
+    Texture2D *SpriteAtlas;
+    EntityAnimations entityAnimation;
 };
 
 struct world_data
@@ -60,31 +92,84 @@ enum TEXT_NAME_
 {
     TEXT_NAME_USELESS,
     TEXT_NAME_SOMETHING,
-    TEXT_NAME_PLAYER
+    TEXT_NAME_PLAYER,
+    TEXT_NAME_BACKGROUND, // there might be multiple levels so why only a single
+                          // background?
 };
 
-struct Frame
+EntityAnimations loadPlayerTextureToFlipbooks(Arena *arena, Entity *Player)
 {
-    f32 u, v, width, height;
-};
+    // TODO: Need to load all animations and make a flipbook
+    // FIX: This should be somewhere else and way more modular
+    constexpr s32 atlasHeight = 616;
+    constexpr s32 atlasWidth  = 448;
+    constexpr s32 tileSize    = 56;
 
-std::vector<Frame>
-loadFrames(s32 frameWidth, s32 frameHeight, s32 atlasWidth, s32 atlasHeight)
-{
-    std::vector<Frame> Result;
+    EntityAnimations playerAnimations = {};
+    playerAnimations.animationCount   = PlayerAnimations_FINAL;
+    playerAnimations.animations =
+        PushArray(arena, playerAnimations.animationCount, SpriteFlipbook);
 
-    for (i32 y = 0; y < atlasHeight; y += frameWidth)
+    for (i32 currentAnimation = 0; currentAnimation < PlayerAnimations_FINAL;
+         ++currentAnimation)
     {
-        for (i32 x = 0; x < atlasWidth; x += frameHeight)
+        SpriteFlipbook *currentFlipbook =
+            &playerAnimations.animations[currentAnimation];
+        currentFlipbook->spriteAtlas    = Player->SpriteAtlas;
+        currentFlipbook->frame_duration = 0.1f;
+
+        switch (currentAnimation)
         {
-            Result.push_back({(f32)x / atlasWidth,
-                              (f32)y / atlasHeight,
-                              (f32)frameWidth / atlasWidth,
-                              (f32)frameHeight / atlasHeight});
+        case PlayerAnimations_Idle: {
+            currentFlipbook->spriteCount = 6;
+        }
+        break;
+        case PlayerAnimations_Attack:
+        case PlayerAnimations_Run:
+        case PlayerAnimations_Jump:
+        case PlayerAnimations_Fall:
+        case PlayerAnimations_Perish:
+        case PlayerAnimations_EnergyGenerate: {
+            currentFlipbook->spriteCount = 8;
+        }
+        break;
+        case PlayerAnimations_Hit:
+        case PlayerAnimations_DeathIdle: {
+            currentFlipbook->spriteCount = 4;
+        }
+        break;
+        case PlayerAnimations_Crouch:
+        case PlayerAnimations_Dodge: {
+            currentFlipbook->spriteCount = 3;
+        }
+        break;
+        default: {
+            currentFlipbook->spriteCount = 0;
+        }
+        break;
+        }
+
+        // You have to initialize the amount of sprites you have for that
+        // animation
+        currentFlipbook->uv =
+            PushArray(arena, currentFlipbook->spriteCount, v4);
+        for (i32 currentSprite = 0;
+             currentSprite < currentFlipbook->spriteCount;
+             ++currentSprite)
+        {
+            s32 tileNum                          = currentSprite * tileSize;
+            currentFlipbook->uv[currentSprite].x = (f32)tileNum / atlasWidth;
+            currentFlipbook->uv[currentSprite].y =
+                (f32)(currentAnimation * tileSize) / atlasHeight;
+            currentFlipbook->uv[currentSprite].z =
+                currentFlipbook->uv[currentSprite].x +
+                ((f32)tileSize / atlasWidth);
+            currentFlipbook->uv[currentSprite].w =
+                currentFlipbook->uv[currentSprite].y +
+                ((f32)tileSize / atlasHeight);
         }
     }
-
-    return Result;
+    return playerAnimations;
 }
 
 void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
@@ -98,8 +183,6 @@ void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
     entity->position.x += entity->velocity.x * dt;
     LOG_INFO("%f what is dt %f\n", entity->velocity.x, dt);
 }
-
-global_var f32 timeCount = 0;
 
 // TODO: Now you have everything in place. Just start making the damn game with
 // the aseprite art. Gotta learn to make things bro.
@@ -127,6 +210,9 @@ internals void update_and_render(game_data *game_state, f32 dt)
         textures[TEXT_NAME_PLAYER].loadTexture(
             "./textures/character_sheet/char_blue_1.png");
 
+        textures[TEXT_NAME_BACKGROUND].loadTexture(
+            "./textures/test.jpg");
+
         Assert(game_state->textureListCount < MAX_CAP_TEXTURES,
                "maximum texture count reached, expand capacity");
 
@@ -144,9 +230,12 @@ internals void update_and_render(game_data *game_state, f32 dt)
         // printf("Maximum texture array size: %d", maxTextureLayers);
         // PLayer initialization
 
-        game_state->Player.Id       = 0;
-        game_state->Player.position = {10, 10, 0};
-        game_state->Player.velocity = {};
+        game_state->Player.Id          = 0;
+        game_state->Player.position    = {10, 10, 0};
+        game_state->Player.velocity    = {};
+        game_state->Player.SpriteAtlas = &textures[TEXT_NAME_PLAYER];
+        game_state->Player.entityAnimation =
+            loadPlayerTextureToFlipbooks(mainArena, &game_state->Player);
 
         game_state->World->world_friction = 0.9f;
         game_state->isInitialized         = true;
@@ -157,7 +246,7 @@ internals void update_and_render(game_data *game_state, f32 dt)
 
     Entity *Player = &game_state->Player;
 
-    f32 accelerationFactor = 100.0f;
+    f32 playerAccFactor = 100.0f;
     for (event_node *node = game_state->EventList->first; node != 0;
          node             = node->next)
     {
@@ -165,12 +254,12 @@ internals void update_and_render(game_data *game_state, f32 dt)
         {
             if (node->v.keycode == GLFW_KEY_A)
             {
-                Player->acceleration.x = -accelerationFactor;
+                Player->acceleration.x = -playerAccFactor;
                 pop_events(game_state->EventList, node);
             }
             if (node->v.keycode == GLFW_KEY_D)
             {
-                Player->acceleration.x = accelerationFactor;
+                Player->acceleration.x = playerAccFactor;
                 pop_events(game_state->EventList, node);
             }
         }
@@ -189,7 +278,13 @@ internals void update_and_render(game_data *game_state, f32 dt)
         }
     }
 
+    b32 runPress    = false;
+    b32 attackPress = false;
     updateEntityMovement(game_state->World, &game_state->Player, dt);
+    if (abs(game_state->Player.velocity.x) > 20.0f)
+    {
+        runPress = true;
+    }
 
     Texture2D *textures = game_state->textureList;
     ren::begin();
@@ -201,34 +296,38 @@ internals void update_and_render(game_data *game_state, f32 dt)
                       {windowDim.x, windowDim.y},
                       WHITE,
                       {0.0f, 0.0f, 1.0f, 1.0f},
-                      &textures[TEXT_NAME_USELESS]);
+                      &textures[TEXT_NAME_BACKGROUND]);
     ren::quad_texture({200, 200},
                       {100, 100},
                       WHITE,
                       {0.0f, 0.0f, 1.0f, 1.0f},
                       &textures[TEXT_NAME_USELESS]);
 
-    i32 atlasHeight = 616;
-    i32 atlasWidth  = 448;
-    i32 tileSize    = 56;
+    // SpriteFlipbook *currentPlayerAnimation = &playerIdle;
+    SpriteFlipbook *currentAnimation =
+        &Player->entityAnimation.animations[PlayerAnimations_Idle];
 
-    s32 totalHorizontalTileCount = 6;
-    s32 value                    = (s32)timeCount % totalHorizontalTileCount;
-    s32 tileNum                  = value * tileSize;
-
-    v4 uv = {};
-    uv.x  = (f32)tileNum / atlasWidth;
-    uv.y  = (f32)(3 * tileSize) / atlasHeight;
-    uv.z  = uv.x + ((f32)tileSize / atlasWidth);
-    uv.w  = uv.y + ((f32)tileSize / atlasHeight);
-
+    if (runPress)
+    {
+        currentAnimation =
+            &Player->entityAnimation.animations[PlayerAnimations_Run];
+    }
+    v4 currentFrameUV = currentAnimation->uv[currentAnimation->current_frame];
+    Texture2D *currentFrameTexture = currentAnimation->spriteAtlas;
     ren::quad_texture(game_state->Player.position,
                       {100, 100},
-                      {1.0f, 1.0f, 1.0f, 1.0f},
-                      uv,
-                      &textures[TEXT_NAME_PLAYER]);
+                      WHITE,
+                      currentFrameUV,
+                      currentFrameTexture);
     ren::end_texture_mode();
-    timeCount += 0.03f;
-    if (timeCount > 16)
-        timeCount = 0;
+
+    currentAnimation->animation_time += dt;
+    if (currentAnimation->animation_time >= currentAnimation->frame_duration)
+    {
+        currentAnimation->current_frame =
+            (currentAnimation->current_frame + 1) %
+            currentAnimation->spriteCount;
+
+        currentAnimation->animation_time = 0.0f;
+    }
 }
