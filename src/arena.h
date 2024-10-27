@@ -9,6 +9,11 @@
 #define Gigabytes(Value) (Megabytes(Value) * 1024LL)
 #define Terabytes(Value) (Gigabytes(Value) * 1024LL)
 
+// size: total size of the arena
+//
+// pos: position to put data. Starts at available space
+//
+// base: actual base address of the arena
 typedef struct
 {
     u64 size;
@@ -23,30 +28,30 @@ typedef struct temp_arena
 } temp_arena;
 
 // Use this if you want to Initialize another arena on top of this.
-inline void InitArena(memory_arena *arena, size_t size, void *base)
+inline void InitArena(Arena *arena, u64 size, void *base)
 {
     arena->size = size;
     arena->base = (u8 *)base;
     arena->pos  = 0;
 }
 
-inline void ArenaRelease(memory_arena *arena)
+inline void ArenaRelease(Arena *arena)
 {
     // free(arena);
     delete[] arena;
 }
 
-inline memory_arena *ArenaAlloc(u64 size)
+inline Arena *ArenaAlloc(u64 size)
 {
-    memory_arena *mainArena = (memory_arena *)malloc(size);
+    Arena *mainArena = (Arena *)malloc(size);
     assert(mainArena);
 
-    InitArena(mainArena, size - sizeof(memory_arena),
-              (u8 *)mainArena + sizeof(memory_arena));
+    InitArena(mainArena, size - sizeof(Arena),
+              (u8 *)mainArena + sizeof(Arena));
     return mainArena;
 }
 
-inline void *PushSize_(memory_arena *arena, size_t size)
+inline void *PushSize_(Arena *arena, u64 size)
 {
     assert((arena->pos + size) <= arena->size);
     void *Result = arena->base + arena->pos;
@@ -64,8 +69,8 @@ inline void ArenaPopTo(Arena *arena, u64 pos)
 inline void ArenaPop(Arena *arena, u64 amt)
 {
     assert((arena->pos - amt) < 0);
-    size_t oldPos = arena->pos;
-    size_t newPos = oldPos;
+    u64 oldPos = arena->pos;
+    u64 newPos = oldPos;
 
     if (amt < oldPos)
     {
