@@ -53,19 +53,32 @@ void ren::Init_Im(Arena *arena)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buf_id);
 
     // TODO: include uv as well but use index buffer to reserve on memory.
-    glVertexAttribPointer(0, sizeof(Vertex::position) / sizeof(f32),
-                          GL_FLOAT, GL_FALSE, sizeof(Vertex),
+    glVertexAttribPointer(0,
+                          sizeof(Vertex::position) / sizeof(f32),
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(Vertex),
                           (void *)(offsetof(Vertex, position)));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, sizeof(Vertex::color) / sizeof(f32),
-                          GL_FLOAT, GL_FALSE, sizeof(Vertex),
+    glVertexAttribPointer(1,
+                          sizeof(Vertex::color) / sizeof(f32),
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(Vertex),
                           (void *)(offsetof(Vertex, color)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, sizeof(Vertex::uv0) / sizeof(f32),
-                          GL_FLOAT, GL_FALSE, sizeof(Vertex),
+    glVertexAttribPointer(2,
+                          sizeof(Vertex::uv0) / sizeof(f32),
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(Vertex),
                           (void *)(offsetof(Vertex, uv0)));
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+    glVertexAttribPointer(3,
+                          1,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(Vertex),
                           (void *)(offsetof(Vertex, texture_index)));
     glEnableVertexAttribArray(3);
 

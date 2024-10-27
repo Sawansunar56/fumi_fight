@@ -4,10 +4,10 @@
 #include <cstdlib>
 #include <cstring>
 
-#define Kilobytes(Value) ((Value) * 1024LL)
-#define Megabytes(Value) (Kilobytes(Value) * 1024LL)
-#define Gigabytes(Value) (Megabytes(Value) * 1024LL)
-#define Terabytes(Value) (Gigabytes(Value) * 1024LL)
+#define KB(Value) ((Value) * 1024LL)
+#define MB(Value) (KB(Value) * 1024LL)
+#define GB(Value) (MB(Value) * 1024LL)
+#define TB(Value) (GB(Value) * 1024LL)
 
 // size: total size of the arena
 //
@@ -95,15 +95,15 @@ inline void temp_end(temp_arena temp) { ArenaPopTo(temp.arena, temp.pos); }
     (type *)PushSize_(Arena, (count) * sizeof(type))
 #define PushSize(Arena, size) PushSize_(Arena, size)
 
-// NOTE: Be really mindful of this. I don't understand pop as accurately as
-// possible and even in professional code, I don't see it being used as often as
-// the other functions. Because well, you might reduce it to shit. Just creating
-// a new arena for specific functionality and just clear it out for certain
-// conditions instead of this pop, because I might accidently just remove a
-// thing that got pushed.
 #define PopStruct(Arena, type) ArenaPop(Arena, sizeof(type))
 #define PopSize(Arena, amt) ArenaPop(Arena, amt)
 #define PopArray(Arena, count, type) ArenaPop(Arena, (count) * sizeof(type))
+
+#define AlignPow2(Value, Alignment) ((Value + ((Alignment) - 1)) & ~((Alignment) - 1))
+#define Align4(Value) ((Value + 3) & ~3)
+#define Align8(Value) ((Value + 7) & ~7)
+#define Align16(Value) ((Value + 15) & ~15)
+#define AlignPadPow2(x,b)  ((0-(x)) & ((b) - 1))
 
 #define MemoryCopy(dst, src, size) memmove((dst), (src), (size))
 #define MemorySet(dst, byte, size) memset((dst), (byte), (size))

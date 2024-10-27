@@ -11,20 +11,6 @@
 // fill this function
 void updateAnimations();
 
-// Colors specified here
-constexpr v4 WHITE      = {1.0f, 1.0f, 1.0f, 1.0f};
-constexpr v4 RED        = {1.0f, 0.0f, 0.0f, 1.0f};
-constexpr v4 BLUE       = {0.0f, 0.0f, 1.0f, 1.0f};
-constexpr v4 GREEN      = {0.0f, 1.0f, 0.0f, 1.0f};
-constexpr v4 BLACK      = {0.0f, 0.0f, 0.0f, 1.0f};
-constexpr v4 CYAN       = {0.0f, 1.0f, 1.0f, 1.0f};
-constexpr v4 YELLOW     = {1.0f, 1.0f, 0.0f, 1.0f};
-constexpr v4 PURPLE     = {1.0f, 0.0f, 1.0f, 1.0f};
-constexpr v4 TEAL       = {0.0f, 0.502f, 0.502f, 1.0f};
-constexpr v4 VIOLET     = {(128.0f / 255.0f), 0.0f, 1.0f, 1.0f};
-constexpr v4 CRIMSON    = {0.863f, 0.078f, 0.235f, 1.0f};
-constexpr v4 ROYAL_BLUE = {0.255f, 0.412f, 0.882f, 1.0f};
-
 enum PlayerAnimations_
 {
     PlayerAnimations_Idle,
@@ -58,6 +44,14 @@ struct EntityAnimations
     u32 animationCount;
 };
 
+enum EntityFeatureFlags_
+{
+    ENTITY_NONE       = 0,
+    ENTITY_RENDERABLE = (1 << 0),
+    ENTITY_RIGID_BODY = (1 << 1),
+};
+typedef u64 EntityFeatureFlags;
+
 struct Entity
 {
     u64 Id;
@@ -65,6 +59,8 @@ struct Entity
     v3 position;
     v3 velocity;
     v3 acceleration;
+
+    EntityFeatureFlags componentFlags;
 
     Texture2D *SpriteAtlas;
     EntityAnimations entityAnimation;
@@ -104,13 +100,13 @@ struct game_data
 
 // NOTE: THINK ABOUT HANDLING THIS. Probably I need a global hash for texture
 // use.
-enum TEXT_NAME_
+enum TEXTURE_LABEL
 {
-    TEXT_NAME_USELESS,
-    TEXT_NAME_SOMETHING,
-    TEXT_NAME_PLAYER,
-    TEXT_NAME_BACKGROUND, // there might be multiple levels so why only a single
-                          // background?
+    TEXTURE_TEST,
+    TEXTURE_SOMETHING,
+    TEXTURE_PLAYER,
+    TEXTURE_BACKGROUND, // there might be multiple levels so why only a single
+                        // background?
 };
 
 EntityAnimations loadPlayerTextureToFlipbooks(Arena *arena, Entity *Player)
@@ -220,15 +216,15 @@ internals void update_and_render(game_data *game_state, f32 dt)
 
         // Texture loadint should be in here
         Texture2D *textures = game_state->textureList;
-        textures[TEXT_NAME_USELESS].loadTexture("./textures/grad_circle.png");
-        textures[TEXT_NAME_SOMETHING].loadTexture("./textures/something.png");
+        textures[TEXTURE_TEST].loadTexture("./textures/grad_circle.png");
+        textures[TEXTURE_SOMETHING].loadTexture("./textures/something.png");
 
         // NOTE: Maybe there should be a specifier to know if a texture is an
         // atlas or not and then have appropriate data related to it.
-        textures[TEXT_NAME_PLAYER].loadTexture(
+        textures[TEXTURE_PLAYER].loadTexture(
             "./textures/character_sheet/char_blue_1.png");
 
-        textures[TEXT_NAME_BACKGROUND].loadTexture(
+        textures[TEXTURE_BACKGROUND].loadTexture(
             "./textures/gradient-background.jpg");
 
         Assert(game_state->textureListCount < MAX_CAP_TEXTURES,
@@ -248,10 +244,11 @@ internals void update_and_render(game_data *game_state, f32 dt)
         // printf("Maximum texture array size: %d", maxTextureLayers);
         // PLayer initialization
 
-        game_state->Player.Id          = 0;
-        game_state->Player.position    = {10, 10, 0};
-        game_state->Player.velocity    = {};
-        game_state->Player.SpriteAtlas = &textures[TEXT_NAME_PLAYER];
+        game_state->Player.Id       = 0;
+        game_state->Player.position = {10, 10, 0};
+        game_state->Player.velocity = {};
+        game_state->Player.componentFlags |= ENTITY_RENDERABLE;
+        game_state->Player.SpriteAtlas = &textures[TEXTURE_PLAYER];
         game_state->Player.entityAnimation =
             loadPlayerTextureToFlipbooks(mainArena, &game_state->Player);
 
@@ -315,21 +312,18 @@ internals void update_and_render(game_data *game_state, f32 dt)
     // RENDERING PART
 
     Texture2D *textures = game_state->textureList;
-    // ren::begin();
-    // ren::quad({100, 100}, {200, 200}, TEAL);
-    // ren::end();
 
     ren::begin_texture_mode();
     ren::quad_texture({0, 0},
                       {windowDim.x, windowDim.y},
-                      WHITE,
+                      CLR_WHITE,
                       {0.0f, 0.0f, 1.0f, 1.0f},
-                      &textures[TEXT_NAME_BACKGROUND]);
+                      &textures[TEXTURE_BACKGROUND]);
     ren::quad_texture({200, 200},
                       {100, 100},
-                      WHITE,
+                      CLR_WHITE,
                       {0.0f, 0.0f, 1.0f, 1.0f},
-                      &textures[TEXT_NAME_USELESS]);
+                      &textures[TEXTURE_TEST]);
 
     // SpriteFlipbook *currentPlayerAnimation = &playerIdle;
     SpriteFlipbook *currentAnimation =
@@ -344,7 +338,7 @@ internals void update_and_render(game_data *game_state, f32 dt)
     Texture2D *currentFrameTexture = currentAnimation->spriteAtlas;
     ren::quad_texture(game_state->Player.position,
                       {100, 100},
-                      WHITE,
+                      CLR_WHITE,
                       currentFrameUV,
                       currentFrameTexture);
     ren::end_texture_mode();
@@ -358,6 +352,9 @@ internals void update_and_render(game_data *game_state, f32 dt)
 
         currentAnimation->animation_time = 0.0f;
     }
+    ren::begin();
+    ren::quad({100, 100}, {200, 200}, CLR_CHILLI_PAPER);
+    ren::end();
 }
 
 void updateAnimations() {}

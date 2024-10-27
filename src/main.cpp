@@ -13,8 +13,8 @@ int main()
     // Memory
     // CLEAN: Maybe I can make a sub arena instead of having two separate
     // arenas.
-    constexpr u32 totalMainMemory   = Megabytes(5);
-    constexpr u32 totalRenderMemory = Megabytes(10);
+    constexpr u32 totalMainMemory   = MB(5);
+    constexpr u32 totalRenderMemory = MB(10);
     Arena *mainArena                = ArenaAlloc(totalMainMemory);
     Arena *renderArena              = ArenaAlloc(totalRenderMemory);
     event_list *EventList           = PushStruct(mainArena, event_list);
