@@ -44,13 +44,17 @@ struct EntityAnimations
     u32 animationCount;
 };
 
+// There has been a discrepency. An object shouldn't be a static and a ridid
+// body at the same time. but this system allows it, I gotta change or redefine
+// some things.
 enum EntityFeatureFlags_
 {
-    ENTITY_NONE       = 0,
-    ENTITY_RENDERABLE = (1 << 0),
-    ENTITY_RIGID_BODY = (1 << 1),
+    ENTITY_NONE        = 0,
+    ENTITY_RENDERABLE  = (1 << 0),
+    ENTITY_STATIC_BODY = (1 << 1),
+    ENTITY_RIGID_BODY  = (1 << 2),
 };
-typedef u64 EntityFeatureFlags;
+typedef u32 EntityFeatureFlags;
 
 struct Entity
 {
@@ -76,7 +80,7 @@ constexpr u16 MAX_ENTITY_COUNT = 10000;
 struct EntityList
 {
     Entity *entities;
-    u32 count;
+    u32 cur;
     u32 cap;
 };
 
@@ -184,7 +188,7 @@ EntityAnimations loadPlayerTextureToFlipbooks(Arena *arena, Entity *Player)
     return playerAnimations;
 }
 
-void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
+internals void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
 {
     entity->velocity.x += entity->acceleration.x * dt;
     entity->velocity.x -= entity->velocity.x * World->world_friction * dt;
@@ -196,7 +200,29 @@ void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
     // LOG_INFO("%f what is dt %f\n", entity->velocity.x, dt);
 }
 
-void gravitySystem() {}
+internals Entity *AddEntity(const EntityList &entity_list)
+{
+    Entity *Result = &entity_list.entities[entity_list.cur];
+    return Result;
+}
+
+// NOTE: This is a risky game I feel. Can't really remove it willy-nilly because
+// position is mighty important. Maybe some sort of block clear?
+internals void RemoveEntity(EntityList *entity_list, u32 count)
+{
+    u32 old_pos = entity_list->cur;
+    u32 new_pos = entity_list->cur - count;
+    if (new_pos < 0)
+    {
+        LOG_INFO("[ERROR] You are trying to remove more entities than what is "
+                 "inside");
+        new_pos = old_pos;
+    }
+    entity_list->cur = new_pos;
+}
+
+// TODO: gravity system
+internals void gravitySystem() {}
 
 // TODO: Now you have everything in place. Just start making the damn game with
 // the aseprite art. Gotta learn to make things bro.
@@ -254,12 +280,16 @@ internals void update_and_render(game_data *game_state, f32 dt)
 
         game_state->World->world_friction = 0.9f;
 
-        game_state->entityList.count = 0;
-        game_state->entityList.cap   = MAX_ENTITY_COUNT;
+        game_state->entityList.cur = 0;
+        game_state->entityList.cap = MAX_ENTITY_COUNT;
         game_state->entityList.entities =
             PushArray(mainArena, game_state->entityList.cap, Entity);
 
         game_state->isInitialized = true;
+
+        EntityList *entityList = &game_state->entityList;
+
+        // Maybe add an enemy
     }
     v2 windowDim = game_state->main_window->GetWindowDimensions();
 
@@ -267,7 +297,8 @@ internals void update_and_render(game_data *game_state, f32 dt)
 
     Entity *Player = &game_state->Player;
 
-    f32 playerAccFactor = 100.0f;
+    f32 playerAccFactor              = 100.0f;
+    local_persist b8 playerDirection = true;
     for (event_node *node = game_state->EventList->first; node != 0;
          node             = node->next)
     {
@@ -302,11 +333,20 @@ internals void update_and_render(game_data *game_state, f32 dt)
     b32 runPress    = false;
     b32 attackPress = false;
     updateEntityMovement(game_state->World, &game_state->Player, dt);
+
+    // FIX: This should be placed somewhere with other animation state
+    // transition.
     if (abs(game_state->Player.velocity.x) > 20.0f)
     {
         runPress = true;
+        if(game_state->Player.velocity.x > 0.0f)
+        {
+            playerDirection = true;
+        }
+        else {
+            playerDirection = false;
+        }
     }
-
     gravitySystem();
 
     // RENDERING PART
@@ -334,8 +374,19 @@ internals void update_and_render(game_data *game_state, f32 dt)
         currentAnimation =
             &Player->entityAnimation.animations[PlayerAnimations_Run];
     }
-    v4 currentFrameUV = currentAnimation->uv[currentAnimation->current_frame];
+    v4 currentFrameUV = {};
     Texture2D *currentFrameTexture = currentAnimation->spriteAtlas;
+    if (playerDirection)
+    {
+        currentFrameUV = currentAnimation->uv[currentAnimation->current_frame];
+    }
+    else
+    {
+        currentFrameUV.x = currentAnimation->uv[currentAnimation->current_frame].z;
+        currentFrameUV.y = currentAnimation->uv[currentAnimation->current_frame].y;
+        currentFrameUV.z = currentAnimation->uv[currentAnimation->current_frame].x;
+        currentFrameUV.w = currentAnimation->uv[currentAnimation->current_frame].w;
+    }
     ren::quad_texture(game_state->Player.position,
                       {100, 100},
                       CLR_WHITE,
@@ -353,7 +404,7 @@ internals void update_and_render(game_data *game_state, f32 dt)
         currentAnimation->animation_time = 0.0f;
     }
     ren::begin();
-    ren::quad({100, 100}, {200, 200}, CLR_CHILLI_PAPER);
+    ren::quad({100, 100}, {200, 200}, CLR_EMERALD_GREEN);
     ren::end();
 }
 
