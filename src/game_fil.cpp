@@ -6,6 +6,11 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+// function declarations
+
+// fill this function
+void updateAnimations();
+
 // Colors specified here
 constexpr v4 WHITE      = {1.0f, 1.0f, 1.0f, 1.0f};
 constexpr v4 RED        = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -52,6 +57,7 @@ struct EntityAnimations
     SpriteFlipbook *animations;
     u32 animationCount;
 };
+
 struct Entity
 {
     u64 Id;
@@ -69,6 +75,15 @@ struct world_data
     f32 world_friction;
 };
 
+constexpr u16 MAX_ENTITY_COUNT = 10000;
+
+struct EntityList
+{
+    Entity *entities;
+    u32 count;
+    u32 cap;
+};
+
 struct game_data
 {
     Arena *main_arena;
@@ -81,6 +96,7 @@ struct game_data
     u32 textureListCount;
 
     event_list *EventList;
+    EntityList entityList;
 
     b8 isInitialized;
     world_data *World;
@@ -181,8 +197,10 @@ void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
         entity->velocity.x = 0.0f;
     }
     entity->position.x += entity->velocity.x * dt;
-    LOG_INFO("%f what is dt %f\n", entity->velocity.x, dt);
+    // LOG_INFO("%f what is dt %f\n", entity->velocity.x, dt);
 }
+
+void gravitySystem() {}
 
 // TODO: Now you have everything in place. Just start making the damn game with
 // the aseprite art. Gotta learn to make things bro.
@@ -211,7 +229,7 @@ internals void update_and_render(game_data *game_state, f32 dt)
             "./textures/character_sheet/char_blue_1.png");
 
         textures[TEXT_NAME_BACKGROUND].loadTexture(
-            "./textures/test.jpg");
+            "./textures/gradient-background.jpg");
 
         Assert(game_state->textureListCount < MAX_CAP_TEXTURES,
                "maximum texture count reached, expand capacity");
@@ -238,7 +256,13 @@ internals void update_and_render(game_data *game_state, f32 dt)
             loadPlayerTextureToFlipbooks(mainArena, &game_state->Player);
 
         game_state->World->world_friction = 0.9f;
-        game_state->isInitialized         = true;
+
+        game_state->entityList.count = 0;
+        game_state->entityList.cap   = MAX_ENTITY_COUNT;
+        game_state->entityList.entities =
+            PushArray(mainArena, game_state->entityList.cap, Entity);
+
+        game_state->isInitialized = true;
     }
     v2 windowDim = game_state->main_window->GetWindowDimensions();
 
@@ -286,10 +310,14 @@ internals void update_and_render(game_data *game_state, f32 dt)
         runPress = true;
     }
 
+    gravitySystem();
+
+    // RENDERING PART
+
     Texture2D *textures = game_state->textureList;
-    ren::begin();
-    ren::quad({100, 100}, {200, 200}, TEAL);
-    ren::end();
+    // ren::begin();
+    // ren::quad({100, 100}, {200, 200}, TEAL);
+    // ren::end();
 
     ren::begin_texture_mode();
     ren::quad_texture({0, 0},
@@ -331,3 +359,5 @@ internals void update_and_render(game_data *game_state, f32 dt)
         currentAnimation->animation_time = 0.0f;
     }
 }
+
+void updateAnimations() {}
