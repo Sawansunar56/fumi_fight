@@ -41,7 +41,8 @@ struct SpriteFlipbook
 struct EntityAnimations
 {
     SpriteFlipbook *animations;
-    u32 animationCount;
+    u32 count;
+    u32 cap;
 };
 
 // There has been a discrepency. An object shouldn't be a static and a ridid
@@ -66,7 +67,6 @@ struct Entity
 
     EntityFeatureFlags componentFlags;
 
-    Texture2D *SpriteAtlas;
     EntityAnimations entityAnimation;
 };
 
@@ -111,27 +111,36 @@ enum TEXTURE_LABEL
     TEXTURE_PLAYER,
     TEXTURE_BACKGROUND, // there might be multiple levels so why only a single
                         // background?
+    TEXTURE_FROG_IDLE,
+    TEXTURE_FROG_JUMP,
 };
 
-EntityAnimations loadPlayerTextureToFlipbooks(Arena *arena, Entity *Player)
+// TODO: Make this function more modular.
+EntityAnimations loadPlayerTextureToFlipbooks(Arena *arena,
+                                              Entity *Player,
+                                              Texture2D *spriteAtlas)
 {
     // TODO: Need to load all animations and make a flipbook
     // FIX: This should be somewhere else and way more modular
-    constexpr s32 atlasHeight = 616;
-    constexpr s32 atlasWidth  = 448;
-    constexpr s32 tileSize    = 56;
+
+    // const s32 atlasHeight = 616;
+    // const s32 atlasWidth  = 448;
+    v2i32 textureDim       = spriteAtlas->getDim();
+    const s32 atlasHeight  = textureDim.y;
+    const s32 atlasWidth   = textureDim.x;
+    constexpr s32 tileSize = 56;
 
     EntityAnimations playerAnimations = {};
-    playerAnimations.animationCount   = PlayerAnimations_FINAL;
+    playerAnimations.count            = PlayerAnimations_FINAL;
     playerAnimations.animations =
-        PushArray(arena, playerAnimations.animationCount, SpriteFlipbook);
+        PushArray(arena, playerAnimations.count, SpriteFlipbook);
 
     for (i32 currentAnimation = 0; currentAnimation < PlayerAnimations_FINAL;
          ++currentAnimation)
     {
         SpriteFlipbook *currentFlipbook =
             &playerAnimations.animations[currentAnimation];
-        currentFlipbook->spriteAtlas    = Player->SpriteAtlas;
+        currentFlipbook->spriteAtlas    = spriteAtlas;
         currentFlipbook->frame_duration = 0.1f;
 
         switch (currentAnimation)
@@ -188,6 +197,13 @@ EntityAnimations loadPlayerTextureToFlipbooks(Arena *arena, Entity *Player)
     return playerAnimations;
 }
 
+// TODO: Need to set a standard or make a better system.
+EntityAnimations loadTextureForFlipbooks(Arena *arena, Entity* entity, Texture2D *spriteAtlas)
+{
+    EntityAnimations Result= {};
+    return Result;
+}
+
 internals void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
 {
     entity->velocity.x += entity->acceleration.x * dt;
@@ -200,9 +216,9 @@ internals void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
     // LOG_INFO("%f what is dt %f\n", entity->velocity.x, dt);
 }
 
-internals Entity *AddEntity(const EntityList &entity_list)
+[[nodiscard]] internals Entity *GetEntity(const EntityList *entity_list)
 {
-    Entity *Result = &entity_list.entities[entity_list.cur];
+    Entity *Result = &entity_list->entities[entity_list->cur];
     return Result;
 }
 
@@ -250,6 +266,11 @@ internals void update_and_render(game_data *game_state, f32 dt)
         textures[TEXTURE_PLAYER].loadTexture(
             "./textures/character_sheet/char_blue_1.png");
 
+        textures[TEXTURE_FROG_IDLE].loadTexture(
+            "./textures/character_sheet/frog-idle.png");
+        textures[TEXTURE_FROG_JUMP].loadTexture(
+            "./textures/character_sheet/frog-jump.png");
+
         textures[TEXTURE_BACKGROUND].loadTexture(
             "./textures/gradient-background.jpg");
 
@@ -270,13 +291,14 @@ internals void update_and_render(game_data *game_state, f32 dt)
         // printf("Maximum texture array size: %d", maxTextureLayers);
         // PLayer initialization
 
-        game_state->Player.Id       = 0;
-        game_state->Player.position = {10, 10, 0};
-        game_state->Player.velocity = {};
-        game_state->Player.componentFlags |= ENTITY_RENDERABLE;
-        game_state->Player.SpriteAtlas = &textures[TEXTURE_PLAYER];
+        game_state->Player.Id             = 0;
+        game_state->Player.position       = {10, 10, 0};
+        game_state->Player.velocity       = {};
+        game_state->Player.componentFlags = ENTITY_RENDERABLE;
         game_state->Player.entityAnimation =
-            loadPlayerTextureToFlipbooks(mainArena, &game_state->Player);
+            loadPlayerTextureToFlipbooks(mainArena,
+                                         &game_state->Player,
+                                         &textures[TEXTURE_PLAYER]);
 
         game_state->World->world_friction = 0.9f;
 
@@ -287,9 +309,11 @@ internals void update_and_render(game_data *game_state, f32 dt)
 
         game_state->isInitialized = true;
 
-        EntityList *entityList = &game_state->entityList;
-
-        // Maybe add an enemy
+        EntityList *entityList    = &game_state->entityList;
+        Entity *enemy_one         = GetEntity(entityList);
+        enemy_one->position       = {400, 10, 0};
+        enemy_one->velocity       = {};
+        enemy_one->componentFlags = ENTITY_RENDERABLE;
     }
     v2 windowDim = game_state->main_window->GetWindowDimensions();
 
@@ -339,11 +363,12 @@ internals void update_and_render(game_data *game_state, f32 dt)
     if (abs(game_state->Player.velocity.x) > 20.0f)
     {
         runPress = true;
-        if(game_state->Player.velocity.x > 0.0f)
+        if (game_state->Player.velocity.x > 0.0f)
         {
             playerDirection = true;
         }
-        else {
+        else
+        {
             playerDirection = false;
         }
     }
@@ -374,7 +399,8 @@ internals void update_and_render(game_data *game_state, f32 dt)
         currentAnimation =
             &Player->entityAnimation.animations[PlayerAnimations_Run];
     }
-    v4 currentFrameUV = {};
+
+    v4 currentFrameUV              = {};
     Texture2D *currentFrameTexture = currentAnimation->spriteAtlas;
     if (playerDirection)
     {
@@ -382,10 +408,14 @@ internals void update_and_render(game_data *game_state, f32 dt)
     }
     else
     {
-        currentFrameUV.x = currentAnimation->uv[currentAnimation->current_frame].z;
-        currentFrameUV.y = currentAnimation->uv[currentAnimation->current_frame].y;
-        currentFrameUV.z = currentAnimation->uv[currentAnimation->current_frame].x;
-        currentFrameUV.w = currentAnimation->uv[currentAnimation->current_frame].w;
+        currentFrameUV.x =
+            currentAnimation->uv[currentAnimation->current_frame].z;
+        currentFrameUV.y =
+            currentAnimation->uv[currentAnimation->current_frame].y;
+        currentFrameUV.z =
+            currentAnimation->uv[currentAnimation->current_frame].x;
+        currentFrameUV.w =
+            currentAnimation->uv[currentAnimation->current_frame].w;
     }
     ren::quad_texture(game_state->Player.position,
                       {100, 100},

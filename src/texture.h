@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "my_maths.h"
 #include <string>
 
 class Texture2D
@@ -10,9 +11,9 @@ class Texture2D
     ~Texture2D();
     void Bind(u32) const;
     void loadTexture(const std::string &filename);
+    inline v2i32 getDim() { return v2i32{m_width, m_height}; };
     u32 m_Id;
 
-  private:
   private:
     s32 m_width, m_height, m_DataFormat, m_InternalFormat;
     b8 isInitialized;
