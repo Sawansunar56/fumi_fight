@@ -11,6 +11,16 @@
 // fill this function
 void updateAnimations();
 
+// WARN: This should be ordered exactly as how the entity are
+// spawned in the initialization code.
+enum EntityCreated
+{
+    // EC_PLAYER_CHAR,
+    EC_ENEMY_ONE,
+    EC_GROUND_ONE,
+    EC_COUNT
+};
+
 enum PlayerAnimations_
 {
     PlayerAnimations_Idle,
@@ -62,6 +72,7 @@ struct Entity
     u64 Id;
 
     v3 position;
+    v3 size;
     v3 velocity;
     v3 acceleration;
 
@@ -198,9 +209,10 @@ EntityAnimations loadPlayerTextureToFlipbooks(Arena *arena,
 }
 
 // TODO: Need to set a standard or make a better system.
-EntityAnimations loadTextureForFlipbooks(Arena *arena, Entity* entity, Texture2D *spriteAtlas)
+EntityAnimations
+loadTextureForFlipbooks(Arena *arena, Entity *entity, Texture2D *spriteAtlas)
 {
-    EntityAnimations Result= {};
+    EntityAnimations Result = {};
     return Result;
 }
 
@@ -216,9 +228,25 @@ internals void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
     // LOG_INFO("%f what is dt %f\n", entity->velocity.x, dt);
 }
 
-[[nodiscard]] internals Entity *GetEntity(const EntityList *entity_list)
+internals Entity *GetEntity(EntityList *entity_list, u64 entityId)
 {
-    Entity *Result = &entity_list->entities[entity_list->cur];
+    Assert((entityId >= 0) && (entityId < entity_list->cap),
+           "entity id outside bounds");
+    Entity *Result = &entity_list->entities[entityId];
+    return Result;
+}
+
+internals Entity *AddEntity(EntityList *entity_list)
+{
+    if (entity_list->cur >= entity_list->cap)
+    {
+        LOG_INFO("You have reached the maximum entity count");
+        return nullptr;
+    }
+
+    Entity *Result = &entity_list->entities[entity_list->cur++];
+    Result->Id = entity_list->cur; // using an incremented id because 0 is set
+                                   // to player entity in the game state.
     return Result;
 }
 
@@ -293,6 +321,7 @@ internals void update_and_render(game_data *game_state, f32 dt)
 
         game_state->Player.Id             = 0;
         game_state->Player.position       = {10, 10, 0};
+        game_state->Player.size           = {100, 100, 0};
         game_state->Player.velocity       = {};
         game_state->Player.componentFlags = ENTITY_RENDERABLE;
         game_state->Player.entityAnimation =
@@ -309,19 +338,33 @@ internals void update_and_render(game_data *game_state, f32 dt)
 
         game_state->isInitialized = true;
 
+        // WARN: Right now the id is just incremented integers and
+        // therefore you can reference it through their spawn order only.
+        // Have to make a more rigid id for better use.
         EntityList *entityList    = &game_state->entityList;
-        Entity *enemy_one         = GetEntity(entityList);
+        Entity *enemy_one         = AddEntity(entityList);
         enemy_one->position       = {400, 10, 0};
-        enemy_one->velocity       = {};
+        enemy_one->size           = {100, 100, 0};
+        enemy_one->velocity       = {0};
         enemy_one->componentFlags = ENTITY_RENDERABLE;
+
+        Entity *ground_one         = AddEntity(entityList);
+        ground_one->position       = {600, 100, 0};
+        ground_one->size           = {500, 100, 0};
+        ground_one->velocity       = {0};
+        ground_one->componentFlags = ENTITY_STATIC_BODY;
     }
-    v2 windowDim = game_state->main_window->GetWindowDimensions();
+    EntityList *entityList = &game_state->entityList;
+    v2 windowDim           = game_state->main_window->GetWindowDimensions();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     Entity *Player = &game_state->Player;
 
+    // Put these variables somewhere.
     f32 playerAccFactor              = 100.0f;
+    b32 runPress                     = false;
+    b32 attackPress                  = false;
     local_persist b8 playerDirection = true;
     for (event_node *node = game_state->EventList->first; node != 0;
          node             = node->next)
@@ -338,9 +381,20 @@ internals void update_and_render(game_data *game_state, f32 dt)
                 Player->acceleration.x = playerAccFactor;
                 pop_events(game_state->EventList, node);
             }
+
+            if (node->v.keycode == GLFW_KEY_K)
+            {
+                attackPress = true;
+                pop_events(game_state->EventList, node);
+            }
         }
         else if (node->v.Type == ET_RELEASE)
         {
+            if (node->v.keycode == GLFW_KEY_K)
+            {
+                attackPress = false;
+                pop_events(game_state->EventList, node);
+            }
             if (node->v.keycode == GLFW_KEY_A)
             {
                 Player->acceleration.x = 0.0f;
@@ -354,8 +408,6 @@ internals void update_and_render(game_data *game_state, f32 dt)
         }
     }
 
-    b32 runPress    = false;
-    b32 attackPress = false;
     updateEntityMovement(game_state->World, &game_state->Player, dt);
 
     // FIX: This should be placed somewhere with other animation state
@@ -394,10 +446,17 @@ internals void update_and_render(game_data *game_state, f32 dt)
     SpriteFlipbook *currentAnimation =
         &Player->entityAnimation.animations[PlayerAnimations_Idle];
 
+    // maybe make this a flag instead of a cluster of if else
     if (runPress)
     {
         currentAnimation =
             &Player->entityAnimation.animations[PlayerAnimations_Run];
+    }
+
+    if (attackPress)
+    {
+        currentAnimation =
+            &Player->entityAnimation.animations[PlayerAnimations_Attack];
     }
 
     v4 currentFrameUV              = {};
@@ -433,8 +492,11 @@ internals void update_and_render(game_data *game_state, f32 dt)
 
         currentAnimation->animation_time = 0.0f;
     }
+
+    Entity *ground_one = GetEntity(entityList, EC_ENEMY_ONE);
+
     ren::begin();
-    ren::quad({100, 100}, {200, 200}, CLR_EMERALD_GREEN);
+    ren::quad(ground_one->position, ground_one->size, CLR_EMERALD_GREEN);
     ren::end();
 }
 

@@ -31,12 +31,12 @@ typedef intptr_t  smm;
 #define global_var    static
 #define local_persist static
 
-static_assert(sizeof(u8) == 1, "u8  is not 8  bit");
+static_assert(sizeof(u8)  == 1, "u8  is not 8  bit");
 static_assert(sizeof(u16) == 2, "u16 is not 16 bit");
 static_assert(sizeof(u32) == 4, "u32 is not 32 bit");
 static_assert(sizeof(u64) == 8, "u64 is not 64 bit");
 
-static_assert(sizeof(s8) == 1, "s8  is not 8  bit");
+static_assert(sizeof(s8)  == 1, "s8  is not 8  bit");
 static_assert(sizeof(s16) == 2, "s16 is not 16 bit");
 static_assert(sizeof(s32) == 4, "s32 is not 32 bit");
 static_assert(sizeof(s64) == 8, "s64 is not 64 bit");
