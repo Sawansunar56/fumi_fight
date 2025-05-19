@@ -19,5 +19,5 @@ class Texture2D
     b8 isInitialized;
 };
 
-internals void TextureInit();
-internals u32 loadTexture(const char *filename);
+function void TextureInit();
+function u32 loadTexture(const char *filename);

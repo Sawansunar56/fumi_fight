@@ -8,9 +8,6 @@
 
 // function declarations
 
-// fill this function
-void updateAnimations();
-
 // WARN: This should be ordered exactly as how the entity are
 // spawned in the initialization code.
 enum EntityCreated
@@ -216,7 +213,7 @@ loadTextureForFlipbooks(Arena *arena, Entity *entity, Texture2D *spriteAtlas)
     return Result;
 }
 
-internals void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
+function void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
 {
     entity->velocity.x += entity->acceleration.x * dt;
     entity->velocity.x -= entity->velocity.x * World->world_friction * dt;
@@ -228,7 +225,7 @@ internals void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
     // LOG_INFO("%f what is dt %f\n", entity->velocity.x, dt);
 }
 
-internals Entity *GetEntity(EntityList *entity_list, u64 entityId)
+function Entity *GetEntity(EntityList *entity_list, u64 entityId)
 {
     Assert((entityId >= 0) && (entityId < entity_list->cap),
            "entity id outside bounds");
@@ -236,7 +233,7 @@ internals Entity *GetEntity(EntityList *entity_list, u64 entityId)
     return Result;
 }
 
-internals Entity *AddEntity(EntityList *entity_list)
+function Entity *AddEntity(EntityList *entity_list)
 {
     if (entity_list->cur >= entity_list->cap)
     {
@@ -252,25 +249,38 @@ internals Entity *AddEntity(EntityList *entity_list)
 
 // NOTE: This is a risky game I feel. Can't really remove it willy-nilly because
 // position is mighty important. Maybe some sort of block clear?
-internals void RemoveEntity(EntityList *entity_list, u32 count)
-{
-    u32 old_pos = entity_list->cur;
-    u32 new_pos = entity_list->cur - count;
-    if (new_pos < 0)
-    {
-        LOG_INFO("[ERROR] You are trying to remove more entities than what is "
-                 "inside");
-        new_pos = old_pos;
-    }
-    entity_list->cur = new_pos;
-}
+// internals void RemoveEntity(EntityList *entity_list, u32 count)
+// {
+//     u32 old_pos = entity_list->cur;
+//     u32 new_pos = entity_list->cur - count;
+//     if (new_pos < 0)
+//     {
+//         LOG_INFO("[ERROR] You are trying to remove more entities than what is
+//         "
+//                  "inside");
+//         new_pos = old_pos;
+//     }
+//     entity_list->cur = new_pos;
+// }
 
 // TODO: gravity system
-internals void gravitySystem() {}
+function void gravitySystem() {}
+
+// NOTE: Need to think about this. The collision handling and what not. 
+void isEntityColliding(Entity* entity, Entity* player) 
+{
+}
+function void collisionCheckSystem(EntityList *entity_list, Entity *player) 
+{
+    for(i32 i = 0; i < entity_list->cur; i++)
+    {
+        isEntityColliding(entity_list->entities + i, player);
+    }
+}
 
 // TODO: Now you have everything in place. Just start making the damn game with
 // the aseprite art. Gotta learn to make things bro.
-internals void update_and_render(game_data *game_state, f32 dt)
+function void update_and_render(game_data *game_state, f32 dt)
 {
     Arena *mainArena   = game_state->main_arena;
     Arena *renderArena = game_state->render_arena;
@@ -365,7 +375,7 @@ internals void update_and_render(game_data *game_state, f32 dt)
     f32 playerAccFactor              = 100.0f;
     b32 runPress                     = false;
     b32 attackPress                  = false;
-    local_persist b8 playerDirection = true;
+    locals b8 playerDirection = true;
     for (event_node *node = game_state->EventList->first; node != 0;
          node             = node->next)
     {
@@ -426,6 +436,7 @@ internals void update_and_render(game_data *game_state, f32 dt)
     }
     gravitySystem();
 
+    collisionCheckSystem(entityList, Player);
     // RENDERING PART
 
     Texture2D *textures = game_state->textureList;
@@ -493,11 +504,11 @@ internals void update_and_render(game_data *game_state, f32 dt)
         currentAnimation->animation_time = 0.0f;
     }
 
-    Entity *ground_one = GetEntity(entityList, EC_ENEMY_ONE);
+    {
+        Entity *ground_one = GetEntity(entityList, EC_GROUND_ONE);
 
-    ren::begin();
-    ren::quad(ground_one->position, ground_one->size, CLR_EMERALD_GREEN);
-    ren::end();
+        ren::begin();
+        ren::quad(ground_one->position, ground_one->size, CLR_EMERALD_GREEN);
+        ren::end();
+    }
 }
-
-void updateAnimations() {}

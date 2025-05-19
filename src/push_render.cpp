@@ -182,12 +182,12 @@ void ren::quad_Im(f32 x0, f32 y0, f32 x1, f32 y1, color Color)
     put_vertex(&v[2], {x1, y1}, Color);
     put_vertex(&v[3], {x0, y1}, Color);
 
-    i[0] = num_indices + 1;
-    i[1] = num_indices + 0;
-    i[2] = num_indices + 2;
-    i[3] = num_indices + 2;
-    i[4] = num_indices + 0;
-    i[5] = num_indices + 3;
+    i[0] = num_vertices + 1;
+    i[1] = num_vertices + 0;
+    i[2] = num_vertices + 2;
+    i[3] = num_vertices + 2;
+    i[4] = num_vertices + 0;
+    i[5] = num_vertices + 3;
 
     // top_right, top_left, bottom_right, bottom_right, top_left, bottom_left
 
@@ -230,12 +230,6 @@ void ren::begin_texture_mode_Im(s32 ShaderType)
 {
     Shader *shader = shaderList.list[ShaderType];
     shader->Bind();
-
-    // CLEAN: Is there a way to do this without making it null everytime I start
-    // for (i32 i = 0; i < MAX_TEXTURE_SLOT; i++)
-    // {
-    //     textures[i] = nullptr;
-    // }
 
     shader->SetUniformMat4("u_Projection", m_Projection);
     // texture_slot_index = 0;
