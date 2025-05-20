@@ -128,8 +128,8 @@ inline void temp_end(temp_arena temp) { ArenaPopTo(temp.arena, temp.pos); }
     (((p) + sizeof(T) <= (e)) ? ((p) += sizeof(T), *(T *)((p) - sizeof(T)))    \
                               : ((p) = (e), 0))
 
-#define ZeroPushStruct(Arena, type) (type *)MemoryZeroStruct(PushStruct(Arena, type))
-#define ZeroPushArray(Arena, count, type) (type*)MemoryZeroTyped(PushArray(Arena, count, type), count)
+#define ZeroPushStruct(Arena, type) ((type *)MemoryZero(PushStruct(Arena, type), sizeof(type)))
+#define ZeroPushArray(Arena, count, type) ((type *)MemoryZero(PushArray(Arena, count, type), (count) * sizeof(type)))
 
 #define DeferLoop(begin, end)        for(int _i_ = ((begin), 0); !_i_; _i_ += 1, (end))
 #define DeferLoopChecked(begin, end) for(int _i_ = 2 * !(begin); (_i_ == 2 ? ((end), 0) : !_i_); _i_ += 1, (end))

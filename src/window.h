@@ -13,7 +13,7 @@ class Window
     ~Window();
     b32 Init();
     b32 ShouldClose() const;
-    void Update() const;
+    void Update(Arena *scratch, event_list* EventList);
     inline v2 GetWindowDimensions() const 
     {
         return {static_cast<f32>(m_Width), static_cast<f32>(m_Height)};
@@ -30,4 +30,5 @@ class Window
     b32 m_running;
     event_list *EventList;
     Arena *mainArena;
+    Arena *scratch;
 };

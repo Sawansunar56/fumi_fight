@@ -10,71 +10,74 @@
 
 int main()
 {
-    // Memory
-    // CLEAN: Maybe I can make a sub arena instead of having two separate
-    // arenas.
-    constexpr u32 totalMainMemory   = MB(5);
-    constexpr u32 totalRenderMemory = MB(10);
-    Arena *mainArena                = ArenaAlloc(totalMainMemory);
-    Arena *renderArena              = ArenaAlloc(totalRenderMemory);
-    event_list *EventList           = PushStruct(mainArena, event_list);
+ // Memory
+ // CLEAN: Maybe I can make a sub arena instead of having two separate
+ // arenas.
+ constexpr u32 totalMainMemory   = MB(5);
+ constexpr u32 totalRenderMemory = MB(10);
+ constexpr s32 FPS               = 60;
+ constexpr f32 frameTime         = 1.0f / FPS;
+ constexpr u32 SCREEN_WIDTH      = 1280;
+ constexpr u32 SCREEN_HEIGHT     = 720;
 
-    constexpr s32 FPS       = 60;
-    constexpr f32 frameTime = 1.0f / FPS;
+ Arena *mainArena   = ArenaAlloc(totalMainMemory);
+ Arena *renderArena = ArenaAlloc(totalRenderMemory);
 
-    // window thingy
-    constexpr u32 SCREEN_WIDTH  = 1280;
-    constexpr u32 SCREEN_HEIGHT = 720;
-    std::string title           = "Hello there";
-    Window main_window(SCREEN_WIDTH, SCREEN_HEIGHT, title);
-    main_window.setArena(mainArena);
-    main_window.setEventList(EventList);
+ // window thingy
+ std::string title = "Hello there";
+ Window main_window(SCREEN_WIDTH, SCREEN_HEIGHT, title);
+ main_window.setArena(mainArena);
 
-    game_data game_state    = {};
-    game_state.main_window  = &main_window;
-    game_state.main_arena   = mainArena;
-    game_state.render_arena = renderArena;
-    game_state.EventList    = EventList;
+ game_data game_state    = {};
+ game_state.main_window  = &main_window;
+ game_state.main_arena   = mainArena;
+ game_state.render_arena = renderArena;
 
-    auto previousTime = std::chrono::steady_clock::now();
+ auto previousTime = std::chrono::steady_clock::now();
 
-    // while (main_window.ShouldClose())
-    // {
-    //     main_window.Update();
-    //     auto frameStart = std::chrono::steady_clock::now();
-    //
-    //     auto currentTime = std::chrono::steady_clock::now();
-    //     std::chrono::duration<f32> elapsed = currentTime - previousTime;
-    //     f32 dt = elapsed.count();
-    //     previousTime = currentTime;
-    //
-    //     update_and_render(&game_state, dt);
-    //
-    //     auto frameEnd = std::chrono::steady_clock::now();
-    //     std::chrono::duration<f32> frameDuration = frameEnd - frameStart;
-    //
-    //     if (frameDuration.count() < frameTime)
-    //     {
-    //         std::this_thread::sleep_for(
-    //             std::chrono::duration<f32>(frameTime -
-    //             frameDuration.count()));
-    //     }
-    // }
+ // while (main_window.ShouldClose())
+ // {
+ //     main_window.Update();
+ //     auto frameStart = std::chrono::steady_clock::now();
+ //
+ //     auto currentTime = std::chrono::steady_clock::now();
+ //     std::chrono::duration<f32> elapsed = currentTime - previousTime;
+ //     f32 dt = elapsed.count();
+ //     previousTime = currentTime;
+ //
+ //     update_and_render(&game_state, dt);
+ //
+ //     auto frameEnd = std::chrono::steady_clock::now();
+ //     std::chrono::duration<f32> frameDuration = frameEnd - frameStart;
+ //
+ //     if (frameDuration.count() < frameTime)
+ //     {
+ //         std::this_thread::sleep_for(
+ //             std::chrono::duration<f32>(frameTime -
+ //             frameDuration.count()));
+ //     }
+ // }
 
-    f32 dt        = 0.0f;
-    auto frameEnd = std::chrono::steady_clock::now();
-    while (main_window.ShouldClose())
-    {
-        auto frameStart = std::chrono::steady_clock::now();
-        main_window.Update();
-        update_and_render(&game_state, dt);
-        frameEnd = std::chrono::steady_clock::now();
+ f32 dt                  = 0.0f;
+ auto frameEnd           = std::chrono::steady_clock::now();
+ Arena *scratchForEvents = ArenaAlloc(MB(10));
+ while (main_window.ShouldClose())
+ {
+  temp_arena scratch = temp_begin(scratchForEvents);
+  auto frameStart    = std::chrono::steady_clock::now();
 
-        std::chrono::duration<f32> elapsed = frameEnd - frameStart;
+  event_list EventList;
+  main_window.Update(scratch.arena, &EventList);
 
-        dt = elapsed.count();
-    }
-    ArenaRelease(mainArena);
-    ArenaRelease(renderArena);
-    return 0;
+  update_and_render(&game_state, &EventList, dt);
+  frameEnd = std::chrono::steady_clock::now();
+
+  std::chrono::duration<f32> elapsed = frameEnd - frameStart;
+
+  dt = elapsed.count();
+  temp_end(scratch);
+ }
+ ArenaRelease(mainArena);
+ ArenaRelease(renderArena);
+ return 0;
 }
