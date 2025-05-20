@@ -506,19 +506,21 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
  collisionCheckSystem(entityList, Player);
  // RENDERING PART
 
- Texture2D *textures = game_state->textureList;
+ {
+  Texture2D *textures = game_state->textureList;
 
- ren::begin_texture_mode();
- ren::quad_texture({0, 0},
-                   {windowDim.x, windowDim.y},
-                   CLR_WHITE,
-                   {0.0f, 0.0f, 1.0f, 1.0f},
-                   &textures[TEXTURE_BACKGROUND]);
- ren::quad_texture({200, 200},
-                   {100, 100},
-                   CLR_WHITE,
-                   {0.0f, 0.0f, 1.0f, 1.0f},
-                   &textures[TEXTURE_TEST]);
+  ren::begin_texture_mode();
+  ren::quad_texture({0, 0},
+                    {windowDim.x, windowDim.y},
+                    CLR_WHITE,
+                    {0.0f, 0.0f, 1.0f, 1.0f},
+                    &textures[TEXTURE_BACKGROUND]);
+  ren::quad_texture({200, 200},
+                    {100, 100},
+                    CLR_WHITE,
+                    {0.0f, 0.0f, 1.0f, 1.0f},
+                    &textures[TEXTURE_TEST]);
+ }
 
  // SpriteFlipbook *currentPlayerAnimation = &playerIdle;
  PlayerAnimate(Player, dt);

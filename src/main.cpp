@@ -13,7 +13,7 @@ int main()
  // Memory
  // CLEAN: Maybe I can make a sub arena instead of having two separate
  // arenas.
- constexpr u32 totalMainMemory   = MB(5);
+ constexpr u32 totalMainMemory   = MB(20);
  constexpr u32 totalRenderMemory = MB(10);
  constexpr s32 FPS               = 60;
  constexpr f32 frameTime         = 1.0f / FPS;

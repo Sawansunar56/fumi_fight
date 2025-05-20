@@ -25,7 +25,7 @@ typedef float f32;
 typedef double f64;
 
 typedef uintptr_t umm;
-typedef intptr_t smm;
+typedef intptr_t  smm;
 
 #define function static
 #define glob static
