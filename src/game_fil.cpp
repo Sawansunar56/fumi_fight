@@ -6,6 +6,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+// defines
+constexpr u16 MAX_ENTITY_COUNT = 10000;
+constexpr f32 GRAVITY = -9.8;
+
 // function declarations
 
 // WARN: This should be ordered exactly as how the entity are
@@ -97,7 +101,6 @@ struct world_data
  f32 world_friction;
 };
 
-constexpr u16 MAX_ENTITY_COUNT = 10000;
 
 struct EntityList
 {
@@ -231,6 +234,7 @@ function void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
   entity->velocity.x = 0.0f;
  }
  entity->position.x += entity->velocity.x * dt;
+ entity->position.y += entity->velocity.y * dt;
  // LOG_INFO("%f what is dt %f\n", entity->velocity.x, dt);
 }
 
@@ -273,16 +277,30 @@ function Entity *AddEntity(EntityList *entity_list)
 // }
 
 // TODO: gravity system
-function void gravitySystem() {}
+function void gravitySystem(Player* player, f32 dt) {
+  player->velocity.y -= GRAVITY * dt;
+}
 
 // NOTE: Need to think about this. The collision handling and what not.
-void isEntityColliding(Entity *entity, Entity *player) {}
+b8 isEntityColliding(Entity *entity, Entity *player)
+{
+ if ((player->position.x + player->size.x) > entity->position.x)
+ {
+  printf("%f, %f\n", player->position.x + player->size.x, entity->position.x);
+  return true;
+ }
+ return false;
+}
 
 function void collisionCheckSystem(EntityList *entity_list, Entity *player)
 {
  for (i32 i = 0; i < entity_list->cur; i++)
  {
-  isEntityColliding(entity_list->entities + i, player);
+  Entity *cur_entity = entity_list->entities + i;
+  if (isEntityColliding(cur_entity, player))
+  {
+   player->position.x = (cur_entity->position.x - player->size.x);
+  }
  }
 }
 
@@ -319,9 +337,14 @@ function void PlayerAnimate(Player *Player, f32 dt)
   currentFrameUV.z = currentAnimation->uv[currentAnimation->current_frame].x;
   currentFrameUV.w = currentAnimation->uv[currentAnimation->current_frame].w;
  }
+
+ ren::begin();
+ ren::quad(Player->position, Player->size, CLR_BLUE);
+ ren::end();
+ ren::begin_texture_mode();
  ren::quad_texture(Player->position,
-                   {100, 100},
-                   CLR_WHITE,
+                   Player->size,
+                   CLR_RED,
                    currentFrameUV,
                    currentFrameTexture);
  ren::end_texture_mode();
@@ -388,7 +411,7 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
   // PLayer initialization
 
   game_state->Player.Id             = 0;
-  game_state->Player.position       = {10, 10, 0};
+  game_state->Player.position       = {0, 10, 0};
   game_state->Player.size           = {100, 100, 0};
   game_state->Player.velocity       = {};
   game_state->Player.componentFlags = ENTITY_RENDERABLE;
@@ -501,11 +524,10 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
  {
   Player->current_state &= ~PlayerState_Run;
  }
- gravitySystem();
-
+ gravitySystem(Player, dt);
  collisionCheckSystem(entityList, Player);
- // RENDERING PART
 
+ // RENDERING PART
  {
   Texture2D *textures = game_state->textureList;
 
@@ -515,11 +537,20 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
                     CLR_WHITE,
                     {0.0f, 0.0f, 1.0f, 1.0f},
                     &textures[TEXTURE_BACKGROUND]);
-  ren::quad_texture({200, 200},
-                    {100, 100},
-                    CLR_WHITE,
-                    {0.0f, 0.0f, 1.0f, 1.0f},
-                    &textures[TEXTURE_TEST]);
+  ren::end_texture_mode();
+  ren::begin();
+  for (s32 i = 0; i < entityList->cur; i++)
+  {
+   Entity *cur_entity = entityList->entities + i;
+   ren::quad(cur_entity->position, cur_entity->size, CLR_WHITE);
+  }
+  ren::end();
+
+  // ren::quad_texture({200, 200},
+  //                   {100, 100},
+  //                   CLR_WHITE,
+  //                   {0.0f, 0.0f, 1.0f, 1.0f},
+  //                   &textures[TEXTURE_TEST]);
  }
 
  // SpriteFlipbook *currentPlayerAnimation = &playerIdle;
