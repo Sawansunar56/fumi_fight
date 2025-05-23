@@ -8,7 +8,7 @@
 
 // defines
 constexpr u16 MAX_ENTITY_COUNT = 10000;
-constexpr f32 GRAVITY = -9.8;
+constexpr f32 GRAVITY          = -9.8;
 
 // function declarations
 
@@ -100,7 +100,6 @@ struct world_data
 {
  f32 world_friction;
 };
-
 
 struct EntityList
 {
@@ -229,7 +228,7 @@ function void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
 {
  entity->velocity.x += entity->acceleration.x * dt;
  entity->velocity.x -= entity->velocity.x * World->world_friction * dt;
- if (abs(entity->velocity.x) < 0.01)
+ if (abs(entity->velocity.x) < 0.1)
  {
   entity->velocity.x = 0.0f;
  }
@@ -277,16 +276,19 @@ function Entity *AddEntity(EntityList *entity_list)
 // }
 
 // TODO: gravity system
-function void gravitySystem(Player* player, f32 dt) {
-  player->velocity.y -= GRAVITY * dt;
+function void gravitySystem(Player *player, f32 dt)
+{
+ player->velocity.y -= GRAVITY * dt;
 }
 
 // NOTE: Need to think about this. The collision handling and what not.
 b8 isEntityColliding(Entity *entity, Entity *player)
 {
- if ((player->position.x + player->size.x) > entity->position.x)
+ if ((player->position.x + player->size.x) > entity->position.x &&
+     player->position.x < (entity->position.x + entity->size.x) &&
+     (player->position.y + player->size.y) > entity->position.y &&
+     player->position.y < (entity->position.y + entity->size.y))
  {
-  printf("%f, %f\n", player->position.x + player->size.x, entity->position.x);
   return true;
  }
  return false;
@@ -299,7 +301,7 @@ function void collisionCheckSystem(EntityList *entity_list, Entity *player)
   Entity *cur_entity = entity_list->entities + i;
   if (isEntityColliding(cur_entity, player))
   {
-   player->position.x = (cur_entity->position.x - player->size.x);
+    player->velocity = {0, 0, 0};
   }
  }
 }
@@ -411,7 +413,7 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
   // PLayer initialization
 
   game_state->Player.Id             = 0;
-  game_state->Player.position       = {0, 10, 0};
+  game_state->Player.position       = {600, 10, 0};
   game_state->Player.size           = {100, 100, 0};
   game_state->Player.velocity       = {};
   game_state->Player.componentFlags = ENTITY_RENDERABLE;
@@ -435,16 +437,22 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
   // Have to make a more rigid id for better use.
   EntityList *entityList    = &game_state->entityList;
   Entity *enemy_one         = AddEntity(entityList);
-  enemy_one->position       = {400, 10, 0};
+  enemy_one->position       = {200, 10, 0};
   enemy_one->size           = {100, 100, 0};
   enemy_one->velocity       = {0};
   enemy_one->componentFlags = ENTITY_RENDERABLE;
 
-  Entity *ground_one         = AddEntity(entityList);
-  ground_one->position       = {600, 100, 0};
-  ground_one->size           = {500, 100, 0};
-  ground_one->velocity       = {0};
-  ground_one->componentFlags = ENTITY_STATIC_BODY;
+  // Entity *ground_one         = AddEntity(entityList);
+  // ground_one->position       = {600, 100, 0};
+  // ground_one->size           = {500, 100, 0};
+  // ground_one->velocity       = {0};
+  // ground_one->componentFlags = ENTITY_STATIC_BODY;
+
+  // Entity *level_ground         = AddEntity(entityList);
+  // level_ground->position       = {0, 500, 0};
+  // level_ground->size           = {800, 100, 0};
+  // level_ground->velocity       = {0};
+  // level_ground->componentFlags = ENTITY_STATIC_BODY;
  }
  EntityList *entityList = &game_state->entityList;
  v2 windowDim           = game_state->main_window->GetWindowDimensions();
@@ -524,7 +532,7 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
  {
   Player->current_state &= ~PlayerState_Run;
  }
- gravitySystem(Player, dt);
+ // gravitySystem(Player, dt);
  collisionCheckSystem(entityList, Player);
 
  // RENDERING PART

@@ -61,12 +61,13 @@ int main()
  f32 dt                  = 0.0f;
  auto frameEnd           = std::chrono::steady_clock::now();
  Arena *scratchForEvents = ArenaAlloc(MB(10));
+ s32 loop_count       = 0;
  while (main_window.ShouldClose())
  {
   temp_arena scratch = temp_begin(scratchForEvents);
   auto frameStart    = std::chrono::steady_clock::now();
 
-  event_list EventList;
+  event_list EventList = {};
   main_window.Update(scratch.arena, &EventList);
 
   update_and_render(&game_state, &EventList, dt);
@@ -76,6 +77,7 @@ int main()
 
   dt = elapsed.count();
   temp_end(scratch);
+  loop_count += 1;
  }
  ArenaRelease(mainArena);
  ArenaRelease(renderArena);
