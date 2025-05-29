@@ -3,13 +3,21 @@
 #include "window.h"
 #include "texture.h"
 #include "log.h"
-#include <event_things.h>
+#include "base_str.h"
+#include <arena.h>
 #include <glad/glad.h>
+#include <event_things.h>
 #include <GLFW/glfw3.h>
+
+#include <source_location>
 
 // defines
 constexpr u16 MAX_ENTITY_COUNT = 10000;
 constexpr f32 GRAVITY          = -9.8;
+
+// globals
+glob Arena *game_scratch   = {0};
+glob Arena *permastr_arena = {0};
 
 // function declarations
 
@@ -80,7 +88,7 @@ enum EntityFeatureFlags_
 
 struct Entity
 {
-  u64 Id;
+  Str8 Id;
 
   v3 position;
   v3 size;
@@ -113,6 +121,7 @@ struct game_data
 {
   Arena *main_arena;
   Arena *render_arena;
+  Arena *permastr_arena;
 
   Player Player;
 
@@ -240,15 +249,18 @@ function void updateEntityMovement(world_data *World, Entity *entity, f32 dt)
   // LOG_INFO("%f what is dt %f\n", entity->velocity.x, dt);
 }
 
-function Entity *GetEntity(EntityList *entity_list, u64 entityId)
-{
-  Assert((entityId >= 0) && (entityId < entity_list->cap),
-         "entity id outside bounds");
-  Entity *Result = &entity_list->entities[entityId];
-  return Result;
-}
+// FIX: This is not good I am having it so that entityID is always aligned to
+// array index which is not very good.
 
-function Entity *AddEntity(EntityList *entity_list)
+// function Entity *GetEntity(EntityList *entity_list, u64 entityId)
+// {
+//   Assert((entityId >= 0) && (entityId < entity_list->cap),
+//          "entity id outside bounds");
+//   Entity *Result = &entity_list->entities[entityId];
+//   return Result;
+// }
+
+function Entity *InsertEntity_(EntityList *entity_list, Str8 id)
 {
   if (entity_list->cur >= entity_list->cap)
   {
@@ -257,9 +269,31 @@ function Entity *AddEntity(EntityList *entity_list)
   }
 
   Entity *Result = &entity_list->entities[entity_list->cur++];
-  Result->Id     = entity_list->cur; // using an incremented id because 0 is set
-                                     // to player entity in the game state.
+  Result->Id     = id; // using an incremented id because 0 is set
+                       // to player entity in the game state.
   return Result;
+}
+
+// NOTE: Id are closely packed and no null terminator are used for their id
+// which run in a consequetive pattern.
+function Str8 createEntityId(s32 x, s32 y)
+{
+  Str8 sec_one = make_str8_from_s32(game_scratch, x);
+  Str8 sec_two = make_str8_from_s32(game_scratch, y);
+
+  Str8 id = concate_str8(permastr_arena, sec_one, sec_two);
+  return id;
+}
+
+function Str8 getEntityId(Entity *entity) { return entity->Id; }
+
+function Entity *
+AddEntity(EntityList *entity_list,
+          s32 iteration                  = 0,
+          const std::source_location loc = std::source_location::current())
+{
+  int num = loc.line();
+  return InsertEntity_(entity_list, createEntityId(num, iteration));
 }
 
 // NOTE: This is a risky game I feel. Can't really remove it willy-nilly because
@@ -444,6 +478,8 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
   if (!game_state->isInitialized)
   {
     constexpr u32 MAX_CAP_TEXTURES = 50;
+    game_scratch                   = ArenaAlloc(MB(10));
+    permastr_arena                 = game_state->permastr_arena;
     game_state->textureListCount   = 0;
     game_state->textureList = PushArray(mainArena, MAX_CAP_TEXTURES, Texture2D);
 
@@ -484,7 +520,7 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
     // printf("Maximum texture array size: %d", maxTextureLayers);
     // PLayer initialization
 
-    game_state->Player.Id             = 0;
+    game_state->Player.Id             = createEntityId(32, 0);
     game_state->Player.position       = {600, 10, 0};
     game_state->Player.size           = {100, 100, 0};
     game_state->Player.velocity       = {};
@@ -504,9 +540,8 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
 
     game_state->isInitialized = true;
 
-    // WARN: Right now the id is just incremented integers and
-    // therefore you can reference it through their spawn order only.
-    // Have to make a more rigid id for better use.
+    // NOTE: Id are closely packed and no null terminator are used for their id
+    // which run in a consequetive pattern.
     EntityList *entityList    = &game_state->entityList;
     Entity *enemy_one         = AddEntity(entityList);
     enemy_one->position       = {200, 10, 0};
@@ -514,11 +549,11 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
     enemy_one->velocity       = {0};
     enemy_one->componentFlags = ENTITY_RENDERABLE;
 
-    // Entity *ground_one         = AddEntity(entityList);
-    // ground_one->position       = {600, 100, 0};
-    // ground_one->size           = {500, 100, 0};
-    // ground_one->velocity       = {0};
-    // ground_one->componentFlags = ENTITY_STATIC_BODY;
+    Entity *ground_one         = AddEntity(entityList);
+    ground_one->position       = {600, 100, 0};
+    ground_one->size           = {500, 100, 0};
+    ground_one->velocity       = {0};
+    ground_one->componentFlags = ENTITY_STATIC_BODY;
 
     // Entity *level_ground         = AddEntity(entityList);
     // level_ground->position       = {0, 500, 0};
@@ -537,10 +572,8 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
   b32 runPress              = false;
   b32 attackPress           = false;
   locals b8 playerDirection = true;
+
   HandleInput(EventList, player);
-
-  // TODO: Make this more modular so you can change key bindings in the future.
-
   updateEntityMovement(game_state->World, &game_state->Player, dt);
 
   // FIX: This should be placed somewhere with other animation state
@@ -582,6 +615,7 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
     for (s32 i = 0; i < entityList->cur; i++)
     {
       Entity *cur_entity = entityList->entities + i;
+      Str8 id            = getEntityId(cur_entity);
       ren::quad(cur_entity->position, cur_entity->size, CLR_WHITE);
     }
     ren::end();
@@ -592,15 +626,16 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
     //                   {0.0f, 0.0f, 1.0f, 1.0f},
     //                   &textures[TEXTURE_TEST]);
   }
-
   // SpriteFlipbook *currentPlayerAnimation = &playerIdle;
   PlayerAnimate(player, dt);
 
   {
-    Entity *ground_one = GetEntity(entityList, EC_GROUND_ONE);
-
-    ren::begin();
-    ren::quad(ground_one->position, ground_one->size, CLR_EMERALD_GREEN);
-    ren::end();
+    // Entity *ground_one   = AddEntity(entityList);
+    // ground_one->position = {600, 100, 0};
+    // ground_one->size     = {400, 100, 0};
+    //
+    // ren::begin();
+    // ren::quad(ground_one->position, ground_one->size, CLR_EMERALD_GREEN);
+    // ren::end();
   }
 }

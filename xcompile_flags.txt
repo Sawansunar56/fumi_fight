@@ -1,3 +1,4 @@
+-std=c++20
 -I./vendor/glfw/include
 -I./vendor/glad/include
 -I./src

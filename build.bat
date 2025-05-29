@@ -1,6 +1,6 @@
 @echo off
 
-set comp_flags=/Od /MD /Zi /EHsc /DGLFW_INCLUDE_NONE /DNDEBUG /std:c++17
+set comp_flags=/Od /MD /Zi /EHsc /DGLFW_INCLUDE_NONE /DSTB_SPRINTF_IMPLEMENTATION /DNDEBUG /std:c++20
 set link_flags=/DEBUG /PDB:main.pdb
 set files=..\src\main.cpp
 
