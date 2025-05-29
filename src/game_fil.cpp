@@ -3,6 +3,7 @@
 #include "window.h"
 #include "texture.h"
 #include "log.h"
+#include <event_things.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -364,68 +365,72 @@ function void PlayerAnimate(Player *Player, f32 dt)
   }
 }
 
-function void HandleInput(event_list* EventList, Player* player) {
-  f32 playerAccFactor       = 100.0f;
+function void HandleInput(event_list *EventList, Player *player)
+{
+  f32 playerAccFactor = 100.0f;
   for (event_node *node = EventList->first; node != 0; node = node->next)
   {
+    b8 event_handled = false;
     if (node->v.Type == ET_PRESS)
     {
-      if (node->v.keycode == GLFW_KEY_A)
+      switch (node->v.keycode)
       {
+      case GLFW_KEY_A: {
         player->acceleration.x = -playerAccFactor;
-        pop_events(EventList, node);
+        event_handled          = true;
       }
-      if (node->v.keycode == GLFW_KEY_D)
-      {
+      break;
+      case GLFW_KEY_D: {
         player->acceleration.x = playerAccFactor;
-        pop_events(EventList, node);
+        event_handled          = true;
       }
-      if (node->v.keycode == GLFW_KEY_S)
-      {
+      break;
+      case GLFW_KEY_S: {
         player->acceleration.y = playerAccFactor;
-        pop_events(EventList, node);
+        event_handled          = true;
       }
-      if (node->v.keycode == GLFW_KEY_W)
-      {
+      break;
+      case GLFW_KEY_W: {
         player->acceleration.y = -playerAccFactor;
-        pop_events(EventList, node);
+        event_handled          = true;
       }
-      if (node->v.keycode == GLFW_KEY_K)
-      {
+      break;
+      case GLFW_KEY_K: {
         player->current_state |= PlayerState_Attack;
-        pop_events(EventList, node);
+        event_handled = true;
+      }
+      break;
       }
     }
     else if (node->v.Type == ET_RELEASE)
     {
-      if (node->v.keycode == GLFW_KEY_K)
+      switch (node->v.keycode)
       {
+      case GLFW_KEY_A:
+      case GLFW_KEY_D: {
+        player->acceleration.x = 0.0f;
+        event_handled          = true;
+      }
+      break;
+      case GLFW_KEY_S:
+      case GLFW_KEY_W: {
+        player->acceleration.y = 0.0f;
+        event_handled          = true;
+      }
+      break;
+      case GLFW_KEY_K: {
         player->current_state &= ~PlayerState_Attack;
-        pop_events(EventList, node);
+        event_handled = true;
       }
-      if (node->v.keycode == GLFW_KEY_A)
-      {
-        player->acceleration.x = 0.0f;
-        pop_events(EventList, node);
-      }
-      if (node->v.keycode == GLFW_KEY_D)
-      {
-        player->acceleration.x = 0.0f;
-        pop_events(EventList, node);
-      }
-      if (node->v.keycode == GLFW_KEY_S)
-      {
-        player->acceleration.y = 0.0f;
-        pop_events(EventList, node);
-      }
-      if (node->v.keycode == GLFW_KEY_W)
-      {
-        player->acceleration.y = 0.0f;
-        pop_events(EventList, node);
+      break;
       }
     }
-  }
 
+    if (event_handled)
+    {
+      pop_events(EventList, node);
+    }
+  }
 }
 
 // TODO: Now you have everything in place. Just start making the damn game with
