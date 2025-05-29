@@ -61,7 +61,7 @@ int main()
  f32 dt                  = 0.0f;
  auto frameEnd           = std::chrono::steady_clock::now();
  Arena *scratchForEvents = ArenaAlloc(MB(10));
- s32 loop_count       = 0;
+ u64 loop_count          = 0;
  while (main_window.ShouldClose())
  {
   temp_arena scratch = temp_begin(scratchForEvents);
