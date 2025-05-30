@@ -1,6 +1,9 @@
 #include "win32_inc.h"
 #include "arena.h"
 #include "types.h"
+
+
+// source files
 #include "base_str.cpp"
 #include "window.cpp"
 #include "Shaders.cpp"
@@ -8,7 +11,6 @@
 #include "push_render.cpp"
 #include "event_things.cpp"
 #include "game_fil.cpp"
-#include <base_str.h>
 
 int main()
 {

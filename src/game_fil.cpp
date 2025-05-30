@@ -9,6 +9,7 @@
 #include <event_things.h>
 #include <GLFW/glfw3.h>
 
+#include <ren_types.h>
 #include <source_location>
 
 // defines
@@ -80,10 +81,12 @@ struct EntityAnimations
 typedef u32 EntityFeatureFlags;
 enum EntityFeatureFlags_
 {
-  ENTITY_NONE        = 0,
-  ENTITY_RENDERABLE  = (1 << 0),
-  ENTITY_STATIC_BODY = (1 << 1),
-  ENTITY_RIGID_BODY  = (1 << 2),
+  ENTITY_NONE         = 0,
+  ENTITY_RENDERABLE   = (1 << 0),
+  ENTITY_STATIC_BODY  = (1 << 1),
+  ENTITY_RIGID_BODY   = (1 << 2),
+  ENTITY_COLOR_BODY   = (1 << 3),
+  ENTITY_TEXTURE_BODY = (1 << 4),
 };
 
 struct Entity
@@ -94,6 +97,8 @@ struct Entity
   v3 size;
   v3 velocity;
   v3 acceleration;
+
+  v4 color;
 
   EntityFeatureFlags componentFlags;
 
@@ -336,7 +341,8 @@ function void collisionCheckSystem(EntityList *entity_list, Entity *player)
   for (i32 i = 0; i < entity_list->cur; i++)
   {
     Entity *cur_entity = entity_list->entities + i;
-    if (isEntityColliding(cur_entity, player))
+    if ((cur_entity->componentFlags & ENTITY_STATIC_BODY) &&
+        isEntityColliding(cur_entity, player))
     {
       player->velocity = {0, 0, 0};
     }
@@ -547,13 +553,15 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
     enemy_one->position       = {200, 10, 0};
     enemy_one->size           = {100, 100, 0};
     enemy_one->velocity       = {0};
-    enemy_one->componentFlags = ENTITY_RENDERABLE;
+    enemy_one->componentFlags = ENTITY_COLOR_BODY;
+    enemy_one->color          = CLR_ROYAL_BLUE;
 
     Entity *ground_one         = AddEntity(entityList);
-    ground_one->position       = {600, 100, 0};
+    ground_one->position       = {600, 300, 0};
     ground_one->size           = {500, 100, 0};
     ground_one->velocity       = {0};
-    ground_one->componentFlags = ENTITY_STATIC_BODY;
+    ground_one->componentFlags = ENTITY_STATIC_BODY | ENTITY_COLOR_BODY;
+    ground_one->color          = CLR_PURPLE;
 
     // Entity *level_ground         = AddEntity(entityList);
     // level_ground->position       = {0, 500, 0};
@@ -615,8 +623,11 @@ update_and_render(game_data *game_state, event_list *EventList, f32 dt)
     for (s32 i = 0; i < entityList->cur; i++)
     {
       Entity *cur_entity = entityList->entities + i;
-      Str8 id            = getEntityId(cur_entity);
-      ren::quad(cur_entity->position, cur_entity->size, CLR_WHITE);
+
+      if (cur_entity->componentFlags & ENTITY_COLOR_BODY)
+      {
+        ren::quad(cur_entity->position, cur_entity->size, cur_entity->color);
+      }
     }
     ren::end();
 
