@@ -45,18 +45,18 @@ Str32 make_str32x(u32 *c, u64 size)
 void print_str8(Str8 s) { printf("%.*s", (int)s.size, s.data); }
 void println_str8(Str8 s) { printf("%.*s\n", (int)s.size, s.data); }
 
-MAKE_STR8_FROM_NUMBERS(s8, "%d")
-MAKE_STR8_FROM_NUMBERS(s16, "%d")
-MAKE_STR8_FROM_NUMBERS(s32, "%d")
-MAKE_STR8_FROM_NUMBERS(s64, "%lld")
-MAKE_STR8_FROM_NUMBERS(u8, "%u")
-MAKE_STR8_FROM_NUMBERS(u16, "%u")
-MAKE_STR8_FROM_NUMBERS(u32, "%u")
-MAKE_STR8_FROM_NUMBERS(u64, "%llu")
+MAKE_STR8_FROM_NUMBERS_IMPL(s8, "%d")
+MAKE_STR8_FROM_NUMBERS_IMPL(s16, "%d")
+MAKE_STR8_FROM_NUMBERS_IMPL(s32, "%d")
+MAKE_STR8_FROM_NUMBERS_IMPL(s64, "%lld")
+MAKE_STR8_FROM_NUMBERS_IMPL(u8, "%u")
+MAKE_STR8_FROM_NUMBERS_IMPL(u16, "%u")
+MAKE_STR8_FROM_NUMBERS_IMPL(u32, "%u")
+MAKE_STR8_FROM_NUMBERS_IMPL(u64, "%llu")
 
-CONCATE_STR(Str8, 8)
-CONCATE_STR(Str16, 16)
-CONCATE_STR(Str32, 32)
+CONCATE_STR_IMPL(Str8, 8)
+CONCATE_STR_IMPL(Str16, 16)
+CONCATE_STR_IMPL(Str32, 32)
 
 // Str8 concate_str8(Arena *arena, Str8 x, Str8 y)
 // {

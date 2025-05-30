@@ -71,14 +71,20 @@ Str8 make_str8_from_s64(Arena* arena, s64 value);
 
 #define make_str8_lit(S) make_str8x((u8 *)(S), sizeof(S) - 1)
 
-#define MAKE_STR8_FROM_NUMBERS(type, fmt) \
+#define MAKE_STR8_FROM_NUMBERS_DEF(type, fmt) \
+Str8 make_str8_from_##type(Arena* arena, type value);
+
+#define MAKE_STR8_FROM_NUMBERS_IMPL(type, fmt) \
 Str8 make_str8_from_##type(Arena* arena, type value) { \
   u8 *buffer = PushArray(arena, 32, u8); \
   s32 len = snprintf((char *)buffer, 32, fmt, value); \
   return make_str8x(buffer, (u64)len); \
 }
 
-#define CONCATE_STR(type, func_name) \
+#define CONCATE_STR_DEF(type, func_name) \
+type concate_str##func_name(Arena* arena, type x, type y);
+
+#define CONCATE_STR_IMPL(type, func_name) \
 type concate_str##func_name(Arena* arena, type x, type y) \
 { \
   u64 total_size = x.size + y.size; \
@@ -87,6 +93,20 @@ type concate_str##func_name(Arena* arena, type x, type y) \
   MemoryCopy(data + x.size, y.data, y.size); \
   return make_str##func_name##x(data, total_size); \
 }
+
+MAKE_STR8_FROM_NUMBERS_DEF(s8, "%d")
+MAKE_STR8_FROM_NUMBERS_DEF(s16, "%d")
+MAKE_STR8_FROM_NUMBERS_DEF(s32, "%d")
+MAKE_STR8_FROM_NUMBERS_DEF(s64, "%lld")
+MAKE_STR8_FROM_NUMBERS_DEF(u8, "%u")
+MAKE_STR8_FROM_NUMBERS_DEF(u16, "%u")
+MAKE_STR8_FROM_NUMBERS_DEF(u32, "%u")
+MAKE_STR8_FROM_NUMBERS_DEF(u64, "%llu")
+
+CONCATE_STR_DEF(Str8, 8)
+CONCATE_STR_DEF(Str16, 16)
+CONCATE_STR_DEF(Str32, 32)
+
 // print 
 void print_str8(Str8 s);
 void println_str8(Str8 s);
