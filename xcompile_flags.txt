@@ -1,6 +1,8 @@
+-xc++
 -std=c++20
+-DGLFW_INCLUDE_NONE
+-DSTB_SPRINTF_IMPLEMENTATION
+-I./vendor/stb
 -I./vendor/glfw/include
 -I./vendor/glad/include
 -I./src
--DGLFW_INCLUDE_NONE
--xc++

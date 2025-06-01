@@ -11,7 +11,7 @@ set win_libs=shell32.lib opengl32.lib user32.lib gdi32.lib
 set vendor_dir=/LIBPATH:"..\vendor\glfw\lib"
 set vendor_libs=glfw3.lib
 
-set includes=/I..\src /I..\vendor\glfw\include /I..\vendor\glad\include
+set includes=/I..\src /I..\vendor\stb /I..\vendor\glfw\include /I..\vendor\glad\include
 
 if not exist .\build mkdir .\build
 pushd .\build
